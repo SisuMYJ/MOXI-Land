@@ -1,0 +1,2 @@
+import Phaser from 'phaser';
+export class FarmPlotSprite extends Phaser.GameObjects.Container { constructor(scene:Phaser.Scene,x:number,y:number){ super(scene,x,y); for(let i=0;i<3;i++){ const plot=scene.add.rectangle((i-1)*28,0,24,18,0x9c6b45).setStrokeStyle(2,0xffe4b4); const sprout=scene.add.text((i-1)*28,-16,i===2?'🌿':'🌱',{fontSize:'20px'}).setOrigin(.5); this.add([plot,sprout]); } scene.add.existing(this); scene.tweens.add({targets:this,angle:1.5,duration:1600,yoyo:true,repeat:-1}); } }
