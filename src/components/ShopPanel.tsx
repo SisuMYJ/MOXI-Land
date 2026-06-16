@@ -1,0 +1,2 @@
+import { shopItems,lumoLines } from '../content/shopItems';import { daySeed } from '../utils/date';import { useGameStore } from '../store/useGameStore';
+export function ShopPanel(){const buy=useGameStore(s=>s.buyItem);return <div><p className="keeper">星灯兽 Lumo：{lumoLines[daySeed()%lumoLines.length]}</p>{shopItems.map(i=><div className="card" key={i.id}><b>{i.name}</b><span>{i.category} · {i.currency==='star'?'⭐':'🌙'}{i.price}</span><button onClick={()=>buy(i.id,i.price,i.currency)}>购买</button></div>)}<p className="muted">节日集市入口已预留，未来会在特殊日期点灯。</p></div>}

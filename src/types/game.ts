@@ -1,0 +1,9 @@
+export type Currency = 'star' | 'moon';
+export type Task = { id: string; title: string; type: 'daily' | 'long_term'; rewardStars: number; completedToday?: boolean };
+export type FarmStage = 'seed' | 'sprout' | 'growing' | 'mature' | 'baby' | 'young';
+export type FarmItem = { id: string; name: string; category: 'plant' | 'animal'; stage: FarmStage; growDaysRequired: number; currentGrowDays: number; caredToday: boolean; produceResourceId: string; resourceName: string; sellMoonValue: number };
+export type ShopItem = { id: string; name: string; category: 'seed' | 'fish' | 'animal' | 'gift' | 'fragment' | 'festival'; price: number; currency: Currency; availableToday: boolean };
+export type Resident = { id: string; name: string; species: string; personality: 'gentle' | 'curious' | 'quiet' | 'energetic' | 'slow' | 'mysterious'; friendship: number; favoriteGiftTags: string[]; currentMood: string; isOutsideToday: boolean; position?: { x: number; y: number }; chattedDate?: string; giftedDate?: string };
+export type ExplorationStory = { id: string; zone: 'forest' | 'lake'; title: string; totalDays: number; currentDay: number; dailyCost: { currency: Currency; amount: number }; status: 'not_started' | 'active' | 'completed' | 'failed'; storyLines: string[]; rewardIds: string[]; lastAdvancedDate?: string };
+export type AIPromptContext = { resident?: Resident; weather: string; islandEvents: string[]; playerRecentTasks: Task[]; friendship?: number };
+export type Panel = 'tasks' | 'shop' | 'farm' | 'messages' | 'resident' | 'forest' | 'lake' | null;

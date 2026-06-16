@@ -1,0 +1,2 @@
+import { useGameStore } from '../store/useGameStore';
+export function FarmPanel(){const {farm,careFarm,sellProduce}=useGameStore();return <div><button className="primary" onClick={careFarm}>一键浇水喂食（消耗 ⭐1）</button><div className="farmgrid">{farm.map(f=><div className="plot" key={f.id}><div className="big">{f.category==='plant'?'🌱':'🐑'}</div><b>{f.name}</b><span>{f.stage} · {f.currentGrowDays}/{f.growDaysRequired} 天</span><small>成熟产出：{f.resourceName}</small><button disabled={f.stage!=='mature'} onClick={()=>sellProduce(f.id)}>出售换 🌙{f.sellMoonValue}</button></div>)}</div></div>}

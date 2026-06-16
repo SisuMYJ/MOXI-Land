@@ -1,0 +1,2 @@
+import { useGameStore } from '../store/useGameStore';
+export function TaskPanel(){const {tasks,completeTask}=useGameStore(); return <div><p>现实里的小努力，会变成岛上的星光。</p>{tasks.map(t=><div className="card" key={t.id}><b>{t.title}</b><span>{t.type==='daily'?'每日':'长期'} · ⭐{t.rewardStars}</span><button disabled={t.completedToday} onClick={()=>completeTask(t.id)}>{t.completedToday?'已完成':'完成任务'}</button></div>)}</div>}
