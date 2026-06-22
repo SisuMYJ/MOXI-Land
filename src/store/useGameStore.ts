@@ -1,13 +1,13 @@
 import { create } from 'zustand';
-import { tasks as taskConfig } from '../content/tasks';
+import { boardMessages } from '../content/boardMessages';
 import { initialFarmItems } from '../content/farmItems';
-import { residents as residentConfig } from '../content/residents';
 import { explorationStories } from '../content/explorationStories';
 import { boardMessages } from '../content/boardMessages';
 import { pickDailyItems } from '../game/systems/dailyPicker';
 import { weatherOptions } from '../content/weather';
-import type { ExplorationStory, FarmItem, Panel, Resident, Task } from '../types/game';
-import { daySeed, todayKey } from '../utils/date';
+import { pickDailyItem, pickDailyItems } from '../game/systems/dailyPicker';
+import type { Currency, DailyState, ExplorationStory, FarmItem, Panel, Resident, ShopItem, Task } from '../types/game';
+import { todayKey } from '../utils/date';
 import { loadState, saveState } from '../utils/localStorage';
 
 type State = { stars:number; moons:number; tasks:Task[]; farm:FarmItem[]; residents:Resident[]; inventory:string[]; stories:ExplorationStory[]; activePanel:Panel; selectedResidentId?:string; weather:string; board?:{date:string; message?:string; messages:string[]; viewed:boolean}; toast?:string; openPanel:(p:Panel,id?:string)=>void; closePanel:()=>void; completeTask:(id:string)=>void; buyItem:(id:string, price:number, currency:'star'|'moon')=>void; careFarm:()=>void; sellProduce:(id:string)=>void; viewBoard:()=>void; chatResident:(id:string)=>void; giftResident:(id:string)=>void; advanceStory:(zone:'forest'|'lake')=>void; notify:(m:string)=>void };
