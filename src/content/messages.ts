@@ -1,0 +1,1 @@
+export { boardMessages } from './boardMessages';
