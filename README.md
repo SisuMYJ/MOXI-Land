@@ -43,6 +43,7 @@ npm run build
 Prototype v1 目前使用 Phaser 几何图形、emoji 和 CSS 作为统一风格占位：动物居民、建筑、农场与地图板块都还不是最终美术资源，也不是外部替换过的具体动物形象。后续如果有 ChatGPT 或其他流程生成的原创动物形象、商品图标、地图板块素材，可以优先替换 `src/game/objects/` 与 `src/game/scenes/IslandScene.ts` 中的占位绘制逻辑。
 
 剧情、留言、居民对话和 Lumo 台词都走 `src/content/` 下的配置文件；当前只保留少量占位文案，适合后续逐步替换为正式文案。功能系统会尽量避免把创意内容写死在组件里。
+商店商品仍在 `src/content/shopItems.ts` 维护，当前每天从商品池固定抽取 4 个展示；未来可继续在商品对象上扩展节日、稀有度或解锁条件字段。
 
 ## Prototype v1 说明
 
