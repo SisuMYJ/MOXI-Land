@@ -286,29 +286,30 @@ export const useGameStore = create<State>((set, get) => ({
       get().notify(alreadyGifted ? '今天已经送过礼啦' : '送出礼物，好感度提升');
       return ns;
     }),
-  advanceStory: (zone) =>
+   advanceStory: (zone) =>
     set((s) => {
       const today = todayKey();
-      const story = s.stories.find((item) => item.zone === zone);
-      if (!story || story.status === 'completed' || story.status === 'failed') return s;
+      const refreshed = refreshDailyState(s, today) as State;
+      const story = refreshed.stories.find((item) => item.zone === zone);
+      if (!story || story.status === 'completed' || story.status === 'failed') return refreshed;
       if (story.lastAdvancedDate === today) {
         get().notify('今天已经推进过这段探索啦');
-        return s;
+        return refreshed;
       }
-      if (!hasCurrency(s, story.dailyCost.currency, story.dailyCost.amount)) {
+      if (!hasCurrency(refreshed, story.dailyCost.currency, story.dailyCost.amount)) {
         get().notify(`${story.dailyCost.currency === 'star' ? '星星币' : '月亮币'}不够`);
-        return s;
+        return refreshed;
       }
       const nextDay = Math.min(story.currentDay + 1, story.totalDays);
       const completed = nextDay >= story.totalDays;
-      const stories = s.stories.map((item) =>
+      const stories = refreshed.stories.map((item) =>
         item.zone === zone ? { ...item, status: completed ? 'completed' : 'active', currentDay: nextDay, lastAdvancedDate: today } : item,
       );
       const ns = {
-        ...s,
-        ...spendCurrency(s, story.dailyCost.currency, story.dailyCost.amount),
+        ...refreshed,
+        ...spendCurrency(refreshed, story.dailyCost.currency, story.dailyCost.amount),
         stories,
-        inventory: completed ? [...s.inventory, ...story.rewardIds.map((rewardId) => `reward:${rewardId}`)] : s.inventory,
+        inventory: completed ? [...refreshed.inventory, ...story.rewardIds.map((rewardId) => `reward:${rewardId}`)] : refreshed.inventory,
       } as State;
       persist(ns);
       get().notify(completed ? '探索完成，奖励已放入背包' : '探索推进了一天');
