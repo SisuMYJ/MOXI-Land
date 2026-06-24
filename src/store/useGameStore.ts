@@ -2,18 +2,19 @@ import { create } from 'zustand';
 import { boardMessages } from '../content/boardMessages';
 import { initialFarmItems } from '../content/farmItems';
 import { explorationStories } from '../content/explorationStories';
+import { islandTiles as initialIslandTiles } from '../content/islandTiles';
 import { lumoLines } from '../content/lumoLines';
 import { residents as residentConfig } from '../content/residents';
 import { shopItems } from '../content/shopItems';
 import { tasks as taskConfig } from '../content/tasks';
 import { weatherOptions } from '../content/weather';
 import { pickDailyItem, pickDailyItems } from '../game/systems/dailyPicker';
-import type { Currency, DailyState, ExplorationStory, FarmItem, Panel, Resident, ShopItem, Task, InventoryItem } from '../types/game';
+import type { Currency, DailyState, ExplorationStory, FarmItem, IslandTile, Panel, Resident, ShopItem, Task, InventoryItem } from '../types/game';
 import { todayKey } from '../utils/date';
 import { loadState, saveState } from '../utils/localStorage';
 
 type BoardState = { date: string; message?: string; messages: string[]; viewed: boolean };
-type StateActions = Pick<State, 'openPanel' | 'closePanel' | 'completeTask' | 'buyItem' | 'careFarm' | 'sellProduce' | 'viewBoard' | 'chatResident' | 'giftResident' | 'advanceStory' | 'notify'>;
+type StateActions = Pick<State, 'openPanel' | 'closePanel' | 'completeTask' | 'buyItem' | 'careFarm' | 'sellProduce' | 'viewBoard' | 'chatResident' | 'giftResident' | 'advanceStory' | 'unlockIslandTile' | 'notify'>;
 
 type State = {
   stars: number;
@@ -23,6 +24,7 @@ type State = {
   residents: Resident[];
   inventory: InventoryItem[];
   stories: ExplorationStory[];
+  islandTiles: IslandTile[];
   daily: DailyState;
   activePanel: Panel;
   selectedResidentId?: string;
@@ -39,6 +41,7 @@ type State = {
   chatResident: (id: string) => void;
   giftResident: (residentId: string, inventoryItemId?: string) => void;
   advanceStory: (zone: 'forest' | 'lake') => void;
+  unlockIslandTile: (id: string) => void;
   notify: (m: string) => void;
 };
 
@@ -122,6 +125,7 @@ const initial = refreshDailyState({
   residents: residentConfig,
   inventory: [],
   stories: explorationStories,
+  islandTiles: initialIslandTiles,
   activePanel: null as Panel,
   weather: weatherOptions[0],
   daily: buildDailyState(),
@@ -167,6 +171,7 @@ const persist = (s: State) =>
     residents: s.residents,
     inventory: s.inventory,
     stories: s.stories,
+    islandTiles: s.islandTiles,
     weather: s.weather,
     daily: s.daily,
     board: s.board,
@@ -197,6 +202,32 @@ export const useGameStore = create<State>((set, get) => ({
   ...persisted,
   openPanel: (activePanel, selectedResidentId) => set({ activePanel, selectedResidentId }),
   closePanel: () => set({ activePanel: null, selectedResidentId: undefined }),
+  unlockIslandTile: (id) =>
+    set((s) => {
+      const tile = s.islandTiles.find((item) => item.id === id);
+      if (!tile) return s;
+      if (tile.status === 'unlocked') {
+        get().notify('地块已经点亮');
+        return s;
+      }
+      if (!tile.unlockCost) {
+        const nextTiles = s.islandTiles.map((item) => (item.id === id ? { ...item, status: 'unlocked' as const } : item));
+        const nextState = { ...s, islandTiles: nextTiles } as State;
+        persist(nextState);
+        get().notify(`已点亮 ${tile.name}`);
+        return nextState;
+      }
+      const canAfford = hasCurrency(s, tile.unlockCost.currency, tile.unlockCost.amount);
+      if (!canAfford) {
+        get().notify('货币不足，先去完成任务或出售收成吧');
+        return s;
+      }
+      const nextTiles = s.islandTiles.map((item) => (item.id === id ? { ...item, status: 'unlocked' as const } : item));
+      const nextState = { ...s, ...spendCurrency(s, tile.unlockCost.currency, tile.unlockCost.amount), islandTiles: nextTiles } as State;
+      persist(nextState);
+      get().notify(`解锁成功：${tile.name}`);
+      return nextState;
+    }),
   notify: (toast) => {
     set({ toast });
     setTimeout(() => set({ toast: undefined }), 2400);
