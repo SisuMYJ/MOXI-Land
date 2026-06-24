@@ -8,3 +8,12 @@ export type ExplorationStory = { id: string; zone: 'forest' | 'lake'; title: str
 export type DailyState = { date: string; weather: string; outsideResidentIds: string[]; shopItemIds: string[]; lumoLineId: string };
 export type AIPromptContext = { resident?: Resident; weather: string; islandEvents: string[]; playerRecentTasks: Task[]; friendship?: number };
 export type Panel = 'tasks' | 'shop' | 'farm' | 'messages' | 'resident' | 'forest' | 'lake' | null;
+
+export type InventoryItem = {
+	id: string;
+	itemId: string;
+	name: string;
+	category: 'gift' | 'fragment' | 'resource' | 'reward';
+	quantity: number;
+	tags?: string[];
+};
