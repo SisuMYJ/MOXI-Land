@@ -1,6 +1,8 @@
 declare module 'react' {
   export function useEffect(effect: () => void | (() => void), deps?: unknown[]): void;
   export function useRef<T>(initialValue?: T): { current: T | undefined };
+  export function useState<S>(initialState?: S | (() => S)): [S, (nextState: S) => void];
+  export function useMemo<T>(factory: () => T, deps: unknown[]): T;
   export const StrictMode: unknown;
   export type ReactNode = unknown;
   export type MouseEvent<T = Element> = { stopPropagation: () => void; currentTarget: T };
