@@ -1,6 +1,13 @@
 export type Currency = 'star' | 'moon';
 export type IslandTileStatus = 'unlocked' | 'locked';
 export type IslandTileKind = 'main' | 'forest' | 'garden' | 'farm' | 'resident' | 'festival';
+export type WeatherAtmosphere = {
+	label: string;
+	description: string;
+	skyColor: number;
+	islandTint: number;
+	particleEmoji: string;
+};
 export type IslandTile = {
 	id: string;
 	name: string;
