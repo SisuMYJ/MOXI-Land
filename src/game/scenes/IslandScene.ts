@@ -7,6 +7,8 @@ import { FarmPlotSprite } from '../objects/FarmPlotSprite';
 import { ResidentSprite } from '../objects/ResidentSprite';
 import { emitIslandEvent } from '../systems/interactionSystem';
 
+const BASELAND_TEXTURE_KEY = 'baseland-v2';
+
 type IslandLayout = {
   centerX: number;
   mapTop: number;
@@ -263,8 +265,8 @@ export class IslandScene extends Phaser.Scene {
     this.createWeatherEffects(w, h);
 
     // The painted baseland owns terrain, lake, paths, trees, flowers, and cliff edges.
-    if (this.textures.exists('baseland')) {
-      this.add.image(layout.baseX, layout.baseY, 'baseland').setOrigin(0.5).setDisplaySize(layout.baseSize, layout.baseSize).setDepth(-12);
+    if (this.textures.exists(BASELAND_TEXTURE_KEY)) {
+      this.add.image(layout.baseX, layout.baseY, BASELAND_TEXTURE_KEY).setOrigin(0.5).setDisplaySize(layout.baseSize, layout.baseSize).setDepth(-12);
     } else {
       this.createFallbackBase(layout);
     }
