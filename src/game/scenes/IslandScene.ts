@@ -22,8 +22,6 @@ type IslandLayout = {
   taskY: number;
   messageX: number;
   messageY: number;
-  farmX: number;
-  farmY: number;
   farmPlotX: number;
   farmPlotY: number;
   shopX: number;
@@ -61,10 +59,9 @@ export class IslandScene extends Phaser.Scene {
     const forest = at(0.52, 0.2);
     const lake = at(0.5, 0.52);
     const task = at(0.47, 0.36);
-    const message = at(0.24, 0.48);
-    const farm = at(0.72, 0.42);
-    const farmPlot = at(0.75, 0.52);
-    const shop = at(0.74, 0.68);
+    const message = at(0.25, 0.49);
+    const farmPlot = at(0.73, 0.46);
+    const shop = at(0.74, 0.69);
 
     return {
       centerX: w / 2,
@@ -81,8 +78,6 @@ export class IslandScene extends Phaser.Scene {
       taskY: task.y,
       messageX: message.x,
       messageY: message.y,
-      farmX: farm.x,
-      farmY: farm.y,
       farmPlotX: farmPlot.x,
       farmPlotY: farmPlot.y,
       shopX: shop.x,
@@ -114,7 +109,7 @@ export class IslandScene extends Phaser.Scene {
   }
 
   preload() {
-    // Only assets explicitly marked usable are loaded. At this stage, that should be baseland only.
+    // Only assets explicitly marked usable are loaded. The generated manifest keeps risky assets blocked.
     assetList.filter((a) => a.status === 'usable').forEach((asset) => {
       if (!this.textures.exists(asset.key)) {
         this.load.image(asset.key, asset.path);
@@ -224,10 +219,10 @@ export class IslandScene extends Phaser.Scene {
     const lakeLabel = this.add
       .text(layout.lakeX, layout.lakeY + layout.baseSize * 0.012, '星光湖 ✨', {
         fontFamily: 'sans-serif',
-        fontSize: '15px',
+        fontSize: '14px',
         color: '#2f6b6f',
-        backgroundColor: 'rgba(255,255,255,0.34)',
-        padding: { x: 8, y: 3 },
+        backgroundColor: 'rgba(255,255,255,0.28)',
+        padding: { x: 7, y: 2 },
       })
       .setOrigin(0.5)
       .setDepth(78);
@@ -236,8 +231,8 @@ export class IslandScene extends Phaser.Scene {
   }
 
   private addForestHotspot(layout: IslandLayout) {
-    const gatePlate = this.add.ellipse(0, 0, 150, 40, 0xffffff, 0.18).setStrokeStyle(2, 0xffffff, 0.28);
-    const gateText = this.add.text(0, 0, '森林探险区', { fontSize: '16px', color: '#315342' }).setOrigin(0.5);
+    const gatePlate = this.add.ellipse(0, 0, 150, 40, 0xffffff, 0.16).setStrokeStyle(2, 0xffffff, 0.24);
+    const gateText = this.add.text(0, 0, '森林探险区', { fontSize: '15px', color: '#315342' }).setOrigin(0.5);
     const gateContainer = this.add.container(layout.forestX, layout.forestY, [gatePlate, gateText]);
     gateContainer.setSize(170, 58).setInteractive({ useHandCursor: true }).on('pointerdown', () => emitIslandEvent('moxi-open-panel', 'forest'));
     gateContainer.setDepth(90);
@@ -262,11 +257,10 @@ export class IslandScene extends Phaser.Scene {
     this.addForestHotspot(layout);
     this.addLakeHotspot(layout);
 
-    // Buildings remain as functional placeholders until each final PNG is cleaned and enabled one by one.
+    // Cleaned PNGs now replace the rough vector building placeholders.
     new BuildingSprite(this, layout.taskX, layout.taskY, '任务小屋', 0xf7d794, () => emitIslandEvent('moxi-open-panel', 'tasks'), 'task-cottage');
     new BuildingSprite(this, layout.messageX, layout.messageY, '留言板', 0xc9a06a, () => emitIslandEvent('moxi-open-panel', 'messages'), 'message-board');
-    new BuildingSprite(this, layout.farmX, layout.farmY, '农场区', 0xb8df72, () => emitIslandEvent('moxi-open-panel', 'farm'), 'farm-plot');
-    new FarmPlotSprite(this, layout.farmPlotX, layout.farmPlotY, 'farm-plot');
+    new FarmPlotSprite(this, layout.farmPlotX, layout.farmPlotY, 'farm-plot', () => emitIslandEvent('moxi-open-panel', 'farm'));
     new BuildingSprite(this, layout.shopX, layout.shopY, '千灯铺', 0xffc9de, () => emitIslandEvent('moxi-open-panel', 'shop'), 'lantern-shop');
 
     residents.filter((resident) => resident.isOutsideToday).forEach((resident) => new ResidentSprite(this, resident, () => emitIslandEvent('moxi-open-resident', resident.id)));
