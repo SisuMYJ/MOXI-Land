@@ -161,6 +161,30 @@ export class IslandScene extends Phaser.Scene {
     return { tree, shadow };
   }
 
+  private createMainPath(cx: number) {
+    const path = this.add.graphics();
+    path.lineStyle(18, 0xf6edcf, 0.72);
+    path.beginPath();
+    path.moveTo(cx, 170);
+    path.lineTo(cx, 310);
+    path.lineTo(cx, 452);
+    path.lineTo(cx + 118, 588);
+    path.strokePath();
+
+    path.lineStyle(14, 0xf8f2dc, 0.58);
+    path.beginPath();
+    path.moveTo(cx, 452);
+    path.lineTo(cx - 124, 350);
+    path.strokePath();
+
+    path.beginPath();
+    path.moveTo(cx, 452);
+    path.lineTo(cx + 138, 350);
+    path.strokePath();
+
+    path.setDepth(-4);
+  }
+
   create() {
     const w = this.scale.width;
     const h = this.scale.height;
@@ -183,6 +207,11 @@ export class IslandScene extends Phaser.Scene {
     g.fillEllipse(w / 2 + 18, h / 2 + 52, 260, 340);
     g.setDepth(-12);
 
+    const centerX = w / 2;
+
+    // Main walking path scaffold around the central lake.
+    this.createMainPath(centerX);
+
     // Clouds (fewer in rainy/misty weather) - simple fallback until PNGs are cleaned
     const cloudCount = ['雨天', '林间薄雾'].includes(this.currentWeather) ? 1 : 3;
     for (let i = 0; i < cloudCount; i++) {
@@ -199,14 +228,14 @@ export class IslandScene extends Phaser.Scene {
       [308, 190, 0.78],
       [438, 190, 0.74],
       [88, 330, 0.62],
-      [196, 345, 0.56],
-      [332, 342, 0.6],
-      [450, 332, 0.58],
+      [198, 620, 0.54],
+      [332, 342, 0.58],
+      [455, 332, 0.56],
     ] as const;
     treePositions.forEach(([tx, ty, scale]) => this.createVectorTree(tx, ty, scale));
 
     // Forest gate interactive. Keep fallback local to the container to avoid double-positioned green blocks.
-    const forestX = w / 2;
+    const forestX = centerX;
     const forestY = 134;
     const gatePlate = this.add.ellipse(0, 0, 170, 46, 0xffffff, 0.26).setStrokeStyle(2, 0xffffff, 0.38);
     const gateText = this.add.text(0, 0, '森林探险区', { fontSize: '18px', color: '#315342' }).setOrigin(0.5);
@@ -214,22 +243,25 @@ export class IslandScene extends Phaser.Scene {
     gateContainer.setSize(180, 70).setInteractive({ useHandCursor: true }).on('pointerdown', () => emitIslandEvent('moxi-open-panel', 'forest'));
     gateContainer.setDepth(145);
 
-    // Buildings (keep original interactions, tune positions for readability)
-    new BuildingSprite(this, w / 2, 410, '任务小屋', 0xf7d794, () => emitIslandEvent('moxi-open-panel', 'tasks'), 'task-cottage');
-    new BuildingSprite(this, 150, 330, '留言板', 0xc9a06a, () => emitIslandEvent('moxi-open-panel', 'messages'), 'message-board');
-    new BuildingSprite(this, 408, 312, '农场区', 0xb8df72, () => emitIslandEvent('moxi-open-panel', 'farm'), 'farm-plot');
-    new FarmPlotSprite(this, 408, 370, 'farm-plot');
-    new BuildingSprite(this, 388, 590, '千灯铺', 0xffc9de, () => emitIslandEvent('moxi-open-panel', 'shop'), 'lantern-shop');
-
-    this.add.text(148, 586, '居民活动区', { fontSize: '17px', color: '#315342' }).setOrigin(0.5).setDepth(555);
-
-    // Lake: use soft vector fallback and keep it inside the viewport.
-    const lakeX = w / 2;
-    const lakeY = Math.min(h - 50, 668);
-    const lakeBody = this.add.ellipse(lakeX, lakeY, 184, 76, 0x81d4fa, 0.9).setStrokeStyle(4, 0xe8fbff).setDepth(80);
-    this.add.text(lakeX, lakeY, '星光湖 ✨', { fontSize: '18px', color: '#26566b' }).setOrigin(0.5).setDepth(81);
+    // Central lake: first real visual anchor of the island.
+    const lakeX = centerX;
+    const lakeY = 452;
+    const lakeShadow = this.add.ellipse(lakeX, lakeY + 6, 210, 88, 0x5fa7a7, 0.14).setDepth(74);
+    const lakeBody = this.add.ellipse(lakeX, lakeY, 188, 82, 0x81d4fa, 0.92).setStrokeStyle(4, 0xe8fbff).setDepth(75);
+    const lakeGlow = this.add.ellipse(lakeX - 18, lakeY - 10, 86, 24, 0xffffff, 0.24).setDepth(76);
+    const lakeLabel = this.add.text(lakeX, lakeY, '星光湖 ✨', { fontSize: '17px', color: '#26566b' }).setOrigin(0.5).setDepth(77);
     lakeBody.setInteractive({ useHandCursor: true }).on('pointerdown', () => emitIslandEvent('moxi-open-panel', 'lake'));
-    this.tweens.add({ targets: lakeBody, scaleX: 1.06, alpha: 0.72, duration: 1500, yoyo: true, repeat: -1 });
+    lakeLabel.setInteractive({ useHandCursor: true }).on('pointerdown', () => emitIslandEvent('moxi-open-panel', 'lake'));
+    this.tweens.add({ targets: [lakeBody, lakeGlow, lakeShadow], scaleX: 1.05, alpha: 0.76, duration: 1500, yoyo: true, repeat: -1 });
+
+    // Buildings (keep original interactions, tune positions around the lake)
+    new BuildingSprite(this, centerX, 318, '任务小屋', 0xf7d794, () => emitIslandEvent('moxi-open-panel', 'tasks'), 'task-cottage');
+    new BuildingSprite(this, 142, 360, '留言板', 0xc9a06a, () => emitIslandEvent('moxi-open-panel', 'messages'), 'message-board');
+    new BuildingSprite(this, 416, 340, '农场区', 0xb8df72, () => emitIslandEvent('moxi-open-panel', 'farm'), 'farm-plot');
+    new FarmPlotSprite(this, 416, 398, 'farm-plot');
+    new BuildingSprite(this, 390, 610, '千灯铺', 0xffc9de, () => emitIslandEvent('moxi-open-panel', 'shop'), 'lantern-shop');
+
+    this.add.text(146, 590, '居民活动区', { fontSize: '17px', color: '#315342' }).setOrigin(0.5).setDepth(555);
 
     islandTiles.forEach((tile) => {
       const isUnlocked = tile.status === 'unlocked';
