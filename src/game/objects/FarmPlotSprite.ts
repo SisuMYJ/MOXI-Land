@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 
 export class FarmPlotSprite extends Phaser.GameObjects.Container {
-	constructor(scene: Phaser.Scene, x: number, y: number, onClick?: () => void) {
+	constructor(scene: Phaser.Scene, x: number, y: number, _assetKey?: string) {
 		super(scene, x, y);
 
 		// shadow
@@ -21,10 +21,6 @@ export class FarmPlotSprite extends Phaser.GameObjects.Container {
 
 			this.add([soil, sprout]);
 		}
-
-		this.setSize(140, 120)
-			.setInteractive({ useHandCursor: true })
-			.on('pointerdown', onClick ?? (() => {}));
 
 		scene.add.existing(this);
 		this.setDepth(this.y);
