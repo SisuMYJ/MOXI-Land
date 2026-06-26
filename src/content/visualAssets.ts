@@ -11,46 +11,55 @@ export type VisualAsset = {
   status: 'usable' | 'blocked-checkerboard' | 'reference-only';
 };
 
-const blockedNote = 'Disabled for now: generated PNG assets need real transparent alpha, tight crop, and consistent scale before scene rendering.';
+const generatedUrl = (fileName: string) =>
+  `https://raw.githubusercontent.com/SisuMYJ/MOXI-Land/main/public/assets/generated/${fileName}`;
+
+const blockedNote = 'Generated assets must be cleaned, tightly cropped, scale-tested, and enabled one by one before scene rendering.';
 
 const blocked = (asset: Omit<VisualAsset, 'status'>): VisualAsset => ({
   ...asset,
   status: 'blocked-checkerboard',
 });
 
+const usable = (asset: Omit<VisualAsset, 'status'>): VisualAsset => ({
+  ...asset,
+  status: 'usable',
+});
+
 export const visualAssets: Record<string, VisualAsset> = {
-  // Baseland is the only generated PNG currently allowed into the scene.
-  // Keep every other generated PNG blocked until it is cleaned and scale-tested one by one.
-  'baseland': {
+  // Loaded from main for now because cleaned PNGs were uploaded there through the GitHub UI.
+  // After this branch is merged, these paths can be changed back to local assets/generated/*.png.
+  'baseland': usable({
     key: 'baseland',
-    path: 'https://raw.githubusercontent.com/SisuMYJ/MOXI-Land/main/public/assets/generated/baseland_clean_cropped.png',
+    path: generatedUrl('baseland.png'),
     scale: 1,
     origin: [0.5, 0.5],
     footprint: { w: 520, h: 520 },
     depthRule: 'manual',
-    status: 'usable',
-  },
+  }),
 
-  'cloud-01': blocked({ key: 'cloud-01', path: 'assets/generated/cloud-01.png', scale: 0.7, origin: [0.5, 0.5] }),
-  'cloud-02': blocked({ key: 'cloud-02', path: 'assets/generated/cloud-02.png', scale: 0.7, origin: [0.5, 0.5] }),
+  'task-cottage': usable({ key: 'task-cottage', path: generatedUrl('task-cottage.png'), scale: 1, origin: [0.5, 1], labelOffset: [0, 18], footprint: { w: 112, h: 111 }, depthRule: 'y' }),
+  'message-board': usable({ key: 'message-board', path: generatedUrl('message-board.png'), scale: 1, origin: [0.5, 1], labelOffset: [0, 16], footprint: { w: 105, h: 110 }, depthRule: 'y' }),
+  'farm-plot': usable({ key: 'farm-plot', path: generatedUrl('farm-plot.png'), scale: 1, origin: [0.5, 1], labelOffset: [0, 16], footprint: { w: 136, h: 101 }, depthRule: 'y' }),
+  'lantern-shop': usable({ key: 'lantern-shop', path: generatedUrl('lantern-shop.png'), scale: 1, origin: [0.5, 1], labelOffset: [0, 16], footprint: { w: 118, h: 131 }, depthRule: 'y' }),
+  'forest-gate': usable({ key: 'forest-gate', path: generatedUrl('forest-gate.png'), scale: 1, origin: [0.5, 1], labelOffset: [0, 0], footprint: { w: 150, h: 143 }, depthRule: 'manual' }),
 
-  'task-cottage': blocked({ key: 'task-cottage', path: 'assets/generated/task-cottage.png', scale: 0.9, origin: [0.5, 0.9], labelOffset: [0, 40], footprint: { w: 140, h: 120 }, depthRule: 'y' }),
-  'farm-plot': blocked({ key: 'farm-plot', path: 'assets/generated/farm-plot.png', scale: 0.9, origin: [0.5, 0.9], labelOffset: [0, 36], footprint: { w: 160, h: 100 }, depthRule: 'y' }),
-  'lantern-shop': blocked({ key: 'lantern-shop', path: 'assets/generated/lantern-shop.png', scale: 0.9, origin: [0.5, 0.9], labelOffset: [0, 40], footprint: { w: 140, h: 120 }, depthRule: 'y' }),
-  'message-board': blocked({ key: 'message-board', path: 'assets/generated/message-board.png', scale: 0.9, origin: [0.5, 0.9], labelOffset: [0, 36], footprint: { w: 120, h: 100 }, depthRule: 'y' }),
-  'forest-gate': blocked({ key: 'forest-gate', path: 'assets/generated/forest-gate.png', scale: 1.0, origin: [0.5, 0.9], labelOffset: [0, 0], footprint: { w: 180, h: 90 }, depthRule: 'manual' }),
-  'starlight-lake': blocked({ key: 'starlight-lake', path: 'assets/generated/starlight-lake.png', scale: 1.0, origin: [0.5, 0.5], labelOffset: [0, 50], footprint: { w: 220, h: 120 }, depthRule: 'manual' }),
+  // Keep the standalone lake for future panels/details, not for the main island map.
+  'starlight-lake': { key: 'starlight-lake', path: generatedUrl('starlight-lake.png'), scale: 1, origin: [0.5, 0.5], labelOffset: [0, 50], footprint: { w: 220, h: 120 }, depthRule: 'manual', status: 'reference-only' },
 
-  'tree-01': blocked({ key: 'tree-01', path: 'assets/generated/tree-01.png', scale: 0.8, origin: [0.5, 1.0], footprint: { w: 80, h: 120 }, depthRule: 'y' }),
+  'mist-cat': usable({ key: 'mist-cat', path: generatedUrl('mist-cat.png'), scale: 1, origin: [0.5, 1], footprint: { w: 54, h: 62 }, depthRule: 'y' }),
+  'foko-fox': usable({ key: 'foko-fox', path: generatedUrl('foko-fox.png'), scale: 1, origin: [0.5, 1], footprint: { w: 54, h: 61 }, depthRule: 'y' }),
+  'deer-lamp': usable({ key: 'deer-lamp', path: generatedUrl('deer-lamp.png'), scale: 1, origin: [0.5, 1], footprint: { w: 48, h: 64 }, depthRule: 'y' }),
+  'slow-bear': usable({ key: 'slow-bear', path: generatedUrl('slow-bear.png'), scale: 1, origin: [0.5, 1], footprint: { w: 54, h: 63 }, depthRule: 'y' }),
+  'dango-rabbit': usable({ key: 'dango-rabbit', path: generatedUrl('dango-rabbit.png'), scale: 1, origin: [0.5, 1], footprint: { w: 50, h: 64 }, depthRule: 'y' }),
+  'lumo': { key: 'lumo', path: generatedUrl('lumo.png'), scale: 1, origin: [0.5, 1], footprint: { w: 56, h: 65 }, depthRule: 'manual', status: 'reference-only' },
 
-  'mist-cat': blocked({ key: 'mist-cat', path: 'assets/generated/mist-cat.png', scale: 0.5, origin: [0.5, 1.0], footprint: { w: 56, h: 64 }, depthRule: 'y' }),
-  'foko-fox': blocked({ key: 'foko-fox', path: 'assets/generated/foko-fox.png', scale: 0.5, origin: [0.5, 1.0], footprint: { w: 56, h: 64 }, depthRule: 'y' }),
-  'deer-lamp': blocked({ key: 'deer-lamp', path: 'assets/generated/deer-lamp.png', scale: 0.6, origin: [0.5, 1.0], footprint: { w: 64, h: 72 }, depthRule: 'y' }),
-  'slow-bear': blocked({ key: 'slow-bear', path: 'assets/generated/slow-bear.png', scale: 0.5, origin: [0.5, 1.0], footprint: { w: 56, h: 64 }, depthRule: 'y' }),
-  'dango-rabbit': blocked({ key: 'dango-rabbit', path: 'assets/generated/dango-rabbit.png', scale: 0.5, origin: [0.5, 1.0], footprint: { w: 56, h: 64 }, depthRule: 'y' }),
+  // These are cleaned, but the baseland already carries most scenery. Keep them available for later scene polish.
+  'cloud-01': usable({ key: 'cloud-01', path: generatedUrl('cloud-01.png'), scale: 1, origin: [0.5, 0.5], footprint: { w: 180, h: 126 }, depthRule: 'manual' }),
+  'cloud-02': usable({ key: 'cloud-02', path: generatedUrl('cloud-02.png'), scale: 1, origin: [0.5, 0.5], footprint: { w: 170, h: 124 }, depthRule: 'manual' }),
+  'tree-01': usable({ key: 'tree-01', path: generatedUrl('tree-01.png'), scale: 1, origin: [0.5, 1], footprint: { w: 70, h: 86 }, depthRule: 'y' }),
 
-  'lumo': { key: 'lumo', path: 'assets/generated/lumo.png', scale: 0.45, origin: [0.5, 1.0], footprint: { w: 40, h: 48 }, depthRule: 'manual', status: 'reference-only' },
-  'style-reference': { key: 'style-reference', path: 'assets/generated/style-reference.png', scale: 1.0, origin: [0.5, 0.5], status: 'reference-only' },
+  'style-reference': { key: 'style-reference', path: generatedUrl('style-reference.png'), scale: 1.0, origin: [0.5, 0.5], status: 'reference-only' },
 };
 
 export const visualAssetNote = blockedNote;
