@@ -11,8 +11,9 @@ export type VisualAsset = {
   status: 'usable' | 'blocked-checkerboard' | 'reference-only';
 };
 
+const assetVersion = 'cleaned-asset-refresh-20260626-01';
 const generatedUrl = (fileName: string) =>
-  `https://raw.githubusercontent.com/SisuMYJ/MOXI-Land/main/public/assets/generated/${fileName}`;
+  `https://raw.githubusercontent.com/SisuMYJ/MOXI-Land/main/public/assets/generated/${fileName}?v=${assetVersion}`;
 
 const blockedNote = 'Generated assets must be cleaned, tightly cropped, scale-tested, and enabled one by one before scene rendering.';
 
