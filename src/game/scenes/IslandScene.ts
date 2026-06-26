@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { islandTiles } from '../../content/islandTiles';
 import { weatherConfigs } from '../../content/weather';
 import { residents } from '../../content/residents';
-import { assetList, visualAssets } from '../../content/visualAssets';
+import { assetList } from '../../content/visualAssets';
 import { BuildingSprite } from '../objects/BuildingSprite';
 import { FarmPlotSprite } from '../objects/FarmPlotSprite';
 import { ResidentSprite } from '../objects/ResidentSprite';
@@ -149,12 +149,12 @@ export class IslandScene extends Phaser.Scene {
   }
 
   private createVectorTree(x: number, y: number, scale = 1) {
-    const shadow = this.add.ellipse(x, y + 4 * scale, 58 * scale, 14 * scale, 0x000000, 0.12).setDepth(y - 1);
+    const shadow = this.add.ellipse(x, y + 4 * scale, 54 * scale, 13 * scale, 0x000000, 0.11).setDepth(y - 1);
     const tree = this.add.container(x, y, [
-      this.add.rectangle(0, -26 * scale, 9 * scale, 34 * scale, 0x8b6244),
-      this.add.ellipse(0, -58 * scale, 44 * scale, 76 * scale, 0x8ebf88),
-      this.add.circle(-10 * scale, -72 * scale, 13 * scale, 0xa9d79c, 0.45),
-      this.add.circle(11 * scale, -48 * scale, 12 * scale, 0x6ea56d, 0.35),
+      this.add.rectangle(0, -24 * scale, 8 * scale, 30 * scale, 0x8b6244),
+      this.add.ellipse(0, -55 * scale, 38 * scale, 68 * scale, 0x8ebf88),
+      this.add.circle(-8 * scale, -68 * scale, 10 * scale, 0xa9d79c, 0.45),
+      this.add.circle(10 * scale, -46 * scale, 10 * scale, 0x6ea56d, 0.35),
     ]);
     tree.setDepth(y);
     this.tweens.add({ targets: tree, angle: 2.5, duration: 1700 + Math.random() * 500, yoyo: true, repeat: -1 });
@@ -175,61 +175,61 @@ export class IslandScene extends Phaser.Scene {
     const g = this.add.graphics();
     // soft cream rim
     g.fillStyle(0xfff6df, 1);
-    g.fillEllipse(w / 2, h / 2 + 50, 440, 620);
+    g.fillEllipse(w / 2, h / 2 + 28, 430, 560);
     // layered grass blobs
     g.fillStyle(0xdff3d8, 1);
-    g.fillEllipse(w / 2 - 4, h / 2 + 55, 350, 500);
+    g.fillEllipse(w / 2 - 6, h / 2 + 32, 342, 444);
     g.fillStyle(0xcfe9c4, 1);
-    g.fillEllipse(w / 2 + 16, h / 2 + 78, 270, 380);
+    g.fillEllipse(w / 2 + 18, h / 2 + 52, 260, 340);
     g.setDepth(-12);
 
     // Clouds (fewer in rainy/misty weather) - simple fallback until PNGs are cleaned
     const cloudCount = ['雨天', '林间薄雾'].includes(this.currentWeather) ? 1 : 3;
     for (let i = 0; i < cloudCount; i++) {
-      const cx = 95 + i * 170;
-      const cy = 145 + (i % 2) * 28;
-      const cloud = this.add.ellipse(cx, cy, 110, 36, 0xffffff, 0.72).setAlpha(0.85).setDepth(-3);
-      this.tweens.add({ targets: cloud, x: cx + 48, duration: 12000 + i * 3500, yoyo: true, repeat: -1 });
+      const cx = 90 + i * 170;
+      const cy = 150 + (i % 2) * 24;
+      const cloud = this.add.ellipse(cx, cy, 104, 34, 0xffffff, 0.62).setAlpha(0.8).setDepth(-3);
+      this.tweens.add({ targets: cloud, x: cx + 42, duration: 12000 + i * 3500, yoyo: true, repeat: -1 });
     }
 
-    // Trees: compact handmade vector fallback
+    // Trees: compact handmade vector fallback, kept around the island rim instead of the center.
     const treePositions = [
-      [75, 185, 0.85],
-      [185, 185, 0.9],
-      [315, 184, 0.9],
-      [450, 185, 0.88],
-      [95, 315, 0.78],
-      [205, 340, 0.74],
-      [325, 330, 0.78],
-      [442, 322, 0.76],
+      [76, 190, 0.72],
+      [184, 190, 0.76],
+      [308, 190, 0.78],
+      [438, 190, 0.74],
+      [88, 330, 0.62],
+      [196, 345, 0.56],
+      [332, 342, 0.6],
+      [450, 332, 0.58],
     ] as const;
     treePositions.forEach(([tx, ty, scale]) => this.createVectorTree(tx, ty, scale));
 
     // Forest gate interactive. Keep fallback local to the container to avoid double-positioned green blocks.
     const forestX = w / 2;
-    const forestY = 132;
-    const gatePlate = this.add.ellipse(0, 0, 170, 48, 0xffffff, 0.32).setStrokeStyle(2, 0xffffff, 0.45);
+    const forestY = 134;
+    const gatePlate = this.add.ellipse(0, 0, 170, 46, 0xffffff, 0.26).setStrokeStyle(2, 0xffffff, 0.38);
     const gateText = this.add.text(0, 0, '森林探险区', { fontSize: '18px', color: '#315342' }).setOrigin(0.5);
     const gateContainer = this.add.container(forestX, forestY, [gatePlate, gateText]);
     gateContainer.setSize(180, 70).setInteractive({ useHandCursor: true }).on('pointerdown', () => emitIslandEvent('moxi-open-panel', 'forest'));
     gateContainer.setDepth(145);
 
     // Buildings (keep original interactions, tune positions for readability)
-    new BuildingSprite(this, w / 2, 370, '任务小屋', 0xf7d794, () => emitIslandEvent('moxi-open-panel', 'tasks'), 'task-cottage');
-    new BuildingSprite(this, 150, 300, '留言板', 0xc9a06a, () => emitIslandEvent('moxi-open-panel', 'messages'), 'message-board');
-    new BuildingSprite(this, 398, 300, '农场区', 0xb8df72, () => emitIslandEvent('moxi-open-panel', 'farm'), 'farm-plot');
-    new FarmPlotSprite(this, 398, 358, 'farm-plot');
-    new BuildingSprite(this, 390, 560, '千灯铺', 0xffc9de, () => emitIslandEvent('moxi-open-panel', 'shop'), 'lantern-shop');
+    new BuildingSprite(this, w / 2, 410, '任务小屋', 0xf7d794, () => emitIslandEvent('moxi-open-panel', 'tasks'), 'task-cottage');
+    new BuildingSprite(this, 150, 330, '留言板', 0xc9a06a, () => emitIslandEvent('moxi-open-panel', 'messages'), 'message-board');
+    new BuildingSprite(this, 408, 312, '农场区', 0xb8df72, () => emitIslandEvent('moxi-open-panel', 'farm'), 'farm-plot');
+    new FarmPlotSprite(this, 408, 370, 'farm-plot');
+    new BuildingSprite(this, 388, 590, '千灯铺', 0xffc9de, () => emitIslandEvent('moxi-open-panel', 'shop'), 'lantern-shop');
 
-    this.add.text(150, 565, '居民活动区', { fontSize: '17px', color: '#315342' }).setOrigin(0.5).setDepth(555);
+    this.add.text(148, 586, '居民活动区', { fontSize: '17px', color: '#315342' }).setOrigin(0.5).setDepth(555);
 
-    // Lake: use soft vector fallback
+    // Lake: use soft vector fallback and keep it inside the viewport.
     const lakeX = w / 2;
-    const lakeY = 710;
-    const lakeBody = this.add.ellipse(lakeX, lakeY, 190, 82, 0x81d4fa, 0.9).setStrokeStyle(4, 0xe8fbff).setDepth(80);
+    const lakeY = Math.min(h - 50, 668);
+    const lakeBody = this.add.ellipse(lakeX, lakeY, 184, 76, 0x81d4fa, 0.9).setStrokeStyle(4, 0xe8fbff).setDepth(80);
     this.add.text(lakeX, lakeY, '星光湖 ✨', { fontSize: '18px', color: '#26566b' }).setOrigin(0.5).setDepth(81);
     lakeBody.setInteractive({ useHandCursor: true }).on('pointerdown', () => emitIslandEvent('moxi-open-panel', 'lake'));
-    this.tweens.add({ targets: lakeBody, scaleX: 1.08, alpha: 0.72, duration: 1500, yoyo: true, repeat: -1 });
+    this.tweens.add({ targets: lakeBody, scaleX: 1.06, alpha: 0.72, duration: 1500, yoyo: true, repeat: -1 });
 
     islandTiles.forEach((tile) => {
       const isUnlocked = tile.status === 'unlocked';
