@@ -47,7 +47,8 @@ export class IslandScene extends Phaser.Scene {
   }
 
   preload() {
-    // Load only assets marked usable in manifest
+    // The manifest currently blocks generated PNGs. This keeps the loader ready for future cleaned assets
+    // without letting oversized/checkerboard images render in the scene.
     assetList.filter((a) => a.status === 'usable').forEach((asset) => {
       if (!this.textures.exists(asset.key)) {
         this.load.image(asset.key, asset.path);
@@ -69,15 +70,15 @@ export class IslandScene extends Phaser.Scene {
   }
 
   private createWindyWeather(w: number, h: number, config: any) {
-    // Light sky with many drifting clouds
+    // Light sky with drifting clouds
     this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setDepth(-10);
-    for (let i = 0; i < 5; i++) {
-      const cloudX = 50 + i * 100;
-      const cloudY = 40 + (i % 2) * 40;
-      const cloud = this.add.ellipse(cloudX, cloudY, 160, 64, 0xffffff).setAlpha(0.7).setDepth(-9);
+    for (let i = 0; i < 4; i++) {
+      const cloudX = 40 + i * 130;
+      const cloudY = 42 + (i % 2) * 36;
+      const cloud = this.add.ellipse(cloudX, cloudY, 116, 42, 0xffffff).setAlpha(0.62).setDepth(-9);
       this.tweens.add({
         targets: cloud,
-        x: cloudX + 120,
+        x: cloudX + 80,
         duration: 8000 + i * 2000,
         yoyo: true,
         repeat: -1,
@@ -106,7 +107,7 @@ export class IslandScene extends Phaser.Scene {
   private createMistyWeather(w: number, h: number, config: any) {
     // Light sky with mist layer
     this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setDepth(-10);
-    
+
     // Semi-transparent white overlay for mist effect
     const mist = this.add.rectangle(w / 2, 200, w, h - 100, 0xffffff, 0.12).setDepth(-8);
     this.tweens.add({
@@ -116,7 +117,7 @@ export class IslandScene extends Phaser.Scene {
       yoyo: true,
       repeat: -1,
     });
-    
+
     // soft drifting mist shape
     const mistShape = this.add.ellipse(w / 2, 100, 260, 60, 0xffffff, 0.5).setDepth(-9);
     this.tweens.add({
@@ -147,6 +148,19 @@ export class IslandScene extends Phaser.Scene {
     }
   }
 
+  private createVectorTree(x: number, y: number, scale = 1) {
+    const shadow = this.add.ellipse(x, y + 4 * scale, 58 * scale, 14 * scale, 0x000000, 0.12).setDepth(y - 1);
+    const tree = this.add.container(x, y, [
+      this.add.rectangle(0, -26 * scale, 9 * scale, 34 * scale, 0x8b6244),
+      this.add.ellipse(0, -58 * scale, 44 * scale, 76 * scale, 0x8ebf88),
+      this.add.circle(-10 * scale, -72 * scale, 13 * scale, 0xa9d79c, 0.45),
+      this.add.circle(11 * scale, -48 * scale, 12 * scale, 0x6ea56d, 0.35),
+    ]);
+    tree.setDepth(y);
+    this.tweens.add({ targets: tree, angle: 2.5, duration: 1700 + Math.random() * 500, yoyo: true, repeat: -1 });
+    return { tree, shadow };
+  }
+
   create() {
     const w = this.scale.width;
     const h = this.scale.height;
@@ -161,94 +175,70 @@ export class IslandScene extends Phaser.Scene {
     const g = this.add.graphics();
     // soft cream rim
     g.fillStyle(0xfff6df, 1);
-    g.fillEllipse(w / 2, h / 2 + 24, 520, 700);
+    g.fillEllipse(w / 2, h / 2 + 50, 440, 620);
     // layered grass blobs
     g.fillStyle(0xdff3d8, 1);
-    g.fillEllipse(w / 2 - 10, h / 2 + 40, 420, 560);
+    g.fillEllipse(w / 2 - 4, h / 2 + 55, 350, 500);
     g.fillStyle(0xcfe9c4, 1);
-    g.fillEllipse(w / 2 + 20, h / 2 + 70, 340, 420);
+    g.fillEllipse(w / 2 + 16, h / 2 + 78, 270, 380);
     g.setDepth(-12);
 
-    // Clouds (fewer in rainy/misty weather) - image or simple ellipse
+    // Clouds (fewer in rainy/misty weather) - simple fallback until PNGs are cleaned
     const cloudCount = ['雨天', '林间薄雾'].includes(this.currentWeather) ? 1 : 3;
     for (let i = 0; i < cloudCount; i++) {
-      const key = i % 2 === 0 ? 'cloud-01' : 'cloud-02';
-      const cx = 80 + i * 210;
-      const cy = 140 + (i % 2) * 30;
-      let cloud: Phaser.GameObjects.GameObject;
-      if (visualAssets[key] && visualAssets[key].status === 'usable' && this.textures.exists(key)) {
-        cloud = this.add.image(cx, cy, key).setScale(visualAssets[key].scale ?? 0.7).setAlpha(0.85).setOrigin(...(visualAssets[key].origin ?? [0.5, 0.5]));
-      } else {
-        cloud = this.add.ellipse(cx, cy, 160, 64, 0xffffff, 0.85).setAlpha(0.9);
-      }
-      this.tweens.add({ targets: cloud, x: cx + 80, duration: 12000 + i * 3500, yoyo: true, repeat: -1 });
+      const cx = 95 + i * 170;
+      const cy = 145 + (i % 2) * 28;
+      const cloud = this.add.ellipse(cx, cy, 110, 36, 0xffffff, 0.72).setAlpha(0.85).setDepth(-3);
+      this.tweens.add({ targets: cloud, x: cx + 48, duration: 12000 + i * 3500, yoyo: true, repeat: -1 });
     }
 
-    // Trees: place a grid of trees, using asset when available
-    const treeKey = 'tree-01';
-    for (let i = 0; i < 8; i++) {
-      const tx = 70 + (i % 4) * 125;
-      const ty = 150 + Math.floor(i / 4) * 120;
-      let tree: Phaser.GameObjects.Image | Phaser.GameObjects.Ellipse;
-      if (visualAssets[treeKey] && visualAssets[treeKey].status === 'usable' && this.textures.exists(treeKey)) {
-        tree = this.add.image(tx, ty, treeKey).setScale(visualAssets[treeKey].scale ?? 0.8).setOrigin(...(visualAssets[treeKey].origin ?? [0.5, 1.0]));
-      } else {
-        tree = this.add.ellipse(tx, ty, 56, 88, 0x8fbf8a).setOrigin(0.5, 1.0);
-      }
-      // add soft shadow under tree
-      const s = this.add.ellipse(tx, ty + 30, 68, 18, 0x000000, 0.12).setOrigin(0.5);
-      tree.setDepth(ty);
-      s.setDepth(ty - 1);
-      this.tweens.add({ targets: tree, angle: 4, duration: 1600 + i * 120, yoyo: true, repeat: -1 });
-    }
+    // Trees: compact handmade vector fallback
+    const treePositions = [
+      [75, 185, 0.85],
+      [185, 185, 0.9],
+      [315, 184, 0.9],
+      [450, 185, 0.88],
+      [95, 315, 0.78],
+      [205, 340, 0.74],
+      [325, 330, 0.78],
+      [442, 322, 0.76],
+    ] as const;
+    treePositions.forEach(([tx, ty, scale]) => this.createVectorTree(tx, ty, scale));
 
-    // Forest gate interactive
-    const gateKey = 'forest-gate';
+    // Forest gate interactive. Keep fallback local to the container to avoid double-positioned green blocks.
     const forestX = w / 2;
-    const forestY = 118;
-    let gate: Phaser.GameObjects.GameObject;
-    if (visualAssets[gateKey] && visualAssets[gateKey].status === 'usable' && this.textures.exists(gateKey)) {
-      gate = this.add.image(forestX, forestY, gateKey).setScale(visualAssets[gateKey].scale ?? 1).setOrigin(...(visualAssets[gateKey].origin ?? [0.5, 0.9]));
-    } else {
-      gate = this.add.rectangle(forestX, forestY, 160, 48, 0x6a8b6b);
-    }
-    const gateContainer = this.add.container(forestX, forestY, [gate]);
-    gateContainer.setSize(180, 100).setInteractive({ useHandCursor: true }).on('pointerdown', () => emitIslandEvent('moxi-open-panel', 'forest'));
+    const forestY = 132;
+    const gatePlate = this.add.ellipse(0, 0, 170, 48, 0xffffff, 0.32).setStrokeStyle(2, 0xffffff, 0.45);
+    const gateText = this.add.text(0, 0, '森林探险区', { fontSize: '18px', color: '#315342' }).setOrigin(0.5);
+    const gateContainer = this.add.container(forestX, forestY, [gatePlate, gateText]);
+    gateContainer.setSize(180, 70).setInteractive({ useHandCursor: true }).on('pointerdown', () => emitIslandEvent('moxi-open-panel', 'forest'));
+    gateContainer.setDepth(145);
 
-    // Buildings (keep original interactive positions)
-    new BuildingSprite(this, w / 2, 340, '任务小屋', 0xf7d794, () => emitIslandEvent('moxi-open-panel', 'tasks'), 'task-cottage');
-    new BuildingSprite(this, 150, 255, '留言板', 0xc9a06a, () => emitIslandEvent('moxi-open-panel', 'messages'), 'message-board');
-    new BuildingSprite(this, 390, 255, '农场区', 0xb8df72, () => emitIslandEvent('moxi-open-panel', 'farm'), 'farm-plot');
-    new FarmPlotSprite(this, 390, 305, 'farm-plot');
-    new BuildingSprite(this, 390, 540, '千灯铺', 0xffc9de, () => emitIslandEvent('moxi-open-panel', 'shop'), 'lantern-shop');
+    // Buildings (keep original interactions, tune positions for readability)
+    new BuildingSprite(this, w / 2, 370, '任务小屋', 0xf7d794, () => emitIslandEvent('moxi-open-panel', 'tasks'), 'task-cottage');
+    new BuildingSprite(this, 150, 300, '留言板', 0xc9a06a, () => emitIslandEvent('moxi-open-panel', 'messages'), 'message-board');
+    new BuildingSprite(this, 398, 300, '农场区', 0xb8df72, () => emitIslandEvent('moxi-open-panel', 'farm'), 'farm-plot');
+    new FarmPlotSprite(this, 398, 358, 'farm-plot');
+    new BuildingSprite(this, 390, 560, '千灯铺', 0xffc9de, () => emitIslandEvent('moxi-open-panel', 'shop'), 'lantern-shop');
 
-    this.add.text(150, 545, '居民活动区', { fontSize: '17px', color: '#315342' }).setOrigin(0.5);
+    this.add.text(150, 565, '居民活动区', { fontSize: '17px', color: '#315342' }).setOrigin(0.5).setDepth(555);
 
-    // Lake: use asset or soft shape
-    const lakeKey = 'starlight-lake';
+    // Lake: use soft vector fallback
     const lakeX = w / 2;
-    const lakeY = 690;
-    let lakeBody: Phaser.GameObjects.GameObject;
-    if (visualAssets[lakeKey] && visualAssets[lakeKey].status === 'usable' && this.textures.exists(lakeKey)) {
-      lakeBody = this.add.image(lakeX, lakeY, lakeKey).setScale(visualAssets[lakeKey].scale ?? 1).setOrigin(...(visualAssets[lakeKey].origin ?? [0.5, 0.5]));
-    } else {
-      lakeBody = this.add.ellipse(lakeX, lakeY, 190, 82, 0x81d4fa, 0.9).setStrokeStyle(4, 0xe8fbff);
-    }
-    const lakeLabel = this.add.text(lakeX, lakeY + 48, '星光湖', { fontSize: '18px', color: '#26566b' }).setOrigin(0.5);
-    const lakeContainer = this.add.container(lakeX, lakeY, [lakeBody, lakeLabel]);
-    lakeContainer.setSize(240, 140).setInteractive({ useHandCursor: true }).on('pointerdown', () => emitIslandEvent('moxi-open-panel', 'lake'));
+    const lakeY = 710;
+    const lakeBody = this.add.ellipse(lakeX, lakeY, 190, 82, 0x81d4fa, 0.9).setStrokeStyle(4, 0xe8fbff).setDepth(80);
+    this.add.text(lakeX, lakeY, '星光湖 ✨', { fontSize: '18px', color: '#26566b' }).setOrigin(0.5).setDepth(81);
+    lakeBody.setInteractive({ useHandCursor: true }).on('pointerdown', () => emitIslandEvent('moxi-open-panel', 'lake'));
     this.tweens.add({ targets: lakeBody, scaleX: 1.08, alpha: 0.72, duration: 1500, yoyo: true, repeat: -1 });
 
     islandTiles.forEach((tile) => {
       const isUnlocked = tile.status === 'unlocked';
-      const hex = this.add.polygon(tile.position.x, tile.position.y, [35, 0, 17, 30, -17, 30, -35, 0, -17, -30, 17, -30], isUnlocked ? 0xfef3b7 : 0xffffff, isUnlocked ? 0.35 : 0.22)
-        .setStrokeStyle(2, isUnlocked ? 0xf7c96b : 0xffffff, 0.7);
+      const hex = this.add.polygon(tile.position.x, tile.position.y, [35, 0, 17, 30, -17, 30, -35, 0, -17, -30, 17, -30], isUnlocked ? 0xfef3b7 : 0xffffff, isUnlocked ? 0.35 : 0.18)
+        .setStrokeStyle(2, isUnlocked ? 0xf7c96b : 0xffffff, 0.65)
+        .setDepth(tile.position.y - 2);
 
-      // simple indicator instead of emoji
-      if (isUnlocked) {
-        this.add.ellipse(tile.position.x, tile.position.y, 28, 12, 0xfff4d9, 0.9).setOrigin(0.5);
-      } else {
-        this.add.rectangle(tile.position.x, tile.position.y, 28, 12, 0xffffff, 0.9).setOrigin(0.5);
+      if (!isUnlocked) {
+        this.add.text(tile.position.x, tile.position.y, '🔒', { fontSize: '15px' }).setOrigin(0.5).setDepth(tile.position.y - 1);
       }
 
       hex.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
