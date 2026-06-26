@@ -9,22 +9,25 @@ import { emitIslandEvent } from '../systems/interactionSystem';
 
 type IslandLayout = {
   centerX: number;
-  hudSafeTop: number;
-  bottomSafe: number;
   mapTop: number;
   mapBottom: number;
-  islandCenterY: number;
+  baseX: number;
+  baseY: number;
+  baseSize: number;
+  forestX: number;
   forestY: number;
+  lakeX: number;
   lakeY: number;
+  taskX: number;
   taskY: number;
   messageX: number;
   messageY: number;
   farmX: number;
   farmY: number;
+  farmPlotX: number;
+  farmPlotY: number;
   shopX: number;
   shopY: number;
-  residentLabelX: number;
-  residentLabelY: number;
 };
 
 export class IslandScene extends Phaser.Scene {
@@ -43,33 +46,47 @@ export class IslandScene extends Phaser.Scene {
   }
 
   private getLayout(w: number, h: number): IslandLayout {
-    // Keep the island away from UI overlays before doing detailed art polish.
-    // Top: HUD/weather pills. Bottom: future navigation/toast/large panel breathing room.
-    const hudSafeTop = 88;
-    const bottomSafe = 82;
-    const mapTop = 174;
-    const mapBottom = Math.max(620, h - bottomSafe);
-    const islandCenterY = (mapTop + mapBottom) / 2 + 18;
-    const lakeY = Phaser.Math.Clamp(islandCenterY + 34, 430, mapBottom - 165);
+    // Keep the island away from UI overlays while letting the baseland art own the terrain.
+    const mapTop = 154;
+    const mapBottom = Math.max(640, h - 58);
+    const baseSize = Phaser.Math.Clamp(Math.min(w * 0.96, (mapBottom - mapTop) * 0.95), 430, 560);
+    const baseX = w / 2;
+    const baseY = mapTop + baseSize * 0.55;
+
+    const at = (u: number, v: number) => ({
+      x: baseX + (u - 0.5) * baseSize,
+      y: baseY + (v - 0.5) * baseSize,
+    });
+
+    const forest = at(0.52, 0.2);
+    const lake = at(0.5, 0.52);
+    const task = at(0.47, 0.36);
+    const message = at(0.24, 0.48);
+    const farm = at(0.72, 0.42);
+    const farmPlot = at(0.75, 0.52);
+    const shop = at(0.74, 0.68);
 
     return {
       centerX: w / 2,
-      hudSafeTop,
-      bottomSafe,
       mapTop,
       mapBottom,
-      islandCenterY,
-      forestY: mapTop - 38,
-      lakeY,
-      taskY: lakeY - 148,
-      messageX: 150,
-      messageY: lakeY - 82,
-      farmX: w - 196,
-      farmY: lakeY - 116,
-      shopX: w - 188,
-      shopY: Math.min(mapBottom - 62, lakeY + 164),
-      residentLabelX: 150,
-      residentLabelY: Math.min(mapBottom - 80, lakeY + 138),
+      baseX,
+      baseY,
+      baseSize,
+      forestX: forest.x,
+      forestY: forest.y,
+      lakeX: lake.x,
+      lakeY: lake.y,
+      taskX: task.x,
+      taskY: task.y,
+      messageX: message.x,
+      messageY: message.y,
+      farmX: farm.x,
+      farmY: farm.y,
+      farmPlotX: farmPlot.x,
+      farmPlotY: farmPlot.y,
+      shopX: shop.x,
+      shopY: shop.y,
     };
   }
 
@@ -97,8 +114,7 @@ export class IslandScene extends Phaser.Scene {
   }
 
   preload() {
-    // The manifest currently blocks generated PNGs. This keeps the loader ready for future cleaned assets
-    // without letting oversized/checkerboard images render in the scene.
+    // Only assets explicitly marked usable are loaded. At this stage, that should be baseland only.
     assetList.filter((a) => a.status === 'usable').forEach((asset) => {
       if (!this.textures.exists(asset.key)) {
         this.load.image(asset.key, asset.path);
@@ -108,8 +124,8 @@ export class IslandScene extends Phaser.Scene {
 
   private createSunnyWeather(w: number, h: number, config: any) {
     // Warm sky gradient effect with stylized sun
-    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setDepth(-10);
-    const sun = this.add.circle(60, 60, 26, 0xffd36b).setDepth(-9).setStrokeStyle(4, 0xfff1c7, 0.9);
+    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setDepth(-20);
+    const sun = this.add.circle(60, 60, 26, 0xffd36b).setDepth(-19).setStrokeStyle(4, 0xfff1c7, 0.9);
     this.tweens.add({
       targets: sun,
       y: 70,
@@ -121,11 +137,11 @@ export class IslandScene extends Phaser.Scene {
 
   private createWindyWeather(w: number, h: number, config: any) {
     // Light sky with drifting clouds
-    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setDepth(-10);
+    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setDepth(-20);
     for (let i = 0; i < 4; i++) {
       const cloudX = 40 + i * 130;
       const cloudY = 42 + (i % 2) * 36;
-      const cloud = this.add.ellipse(cloudX, cloudY, 116, 42, 0xffffff).setAlpha(0.62).setDepth(-9);
+      const cloud = this.add.ellipse(cloudX, cloudY, 116, 42, 0xffffff).setAlpha(0.42).setDepth(-19);
       this.tweens.add({
         targets: cloud,
         x: cloudX + 80,
@@ -138,12 +154,12 @@ export class IslandScene extends Phaser.Scene {
 
   private createRainyWeather(w: number, h: number, config: any) {
     // Gray sky with rain effect
-    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setDepth(-10);
+    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setDepth(-20);
     // Rain drops animation (simple lines)
     for (let i = 0; i < 8; i++) {
       const rainX = 80 + (i % 4) * 120;
       const rainY = 30 + Math.floor(i / 4) * 60;
-      const drop = this.add.rectangle(rainX, rainY, 2, 12, 0xbfe0ff).setAlpha(0.6).setDepth(-9);
+      const drop = this.add.rectangle(rainX, rainY, 2, 12, 0xbfe0ff).setAlpha(0.6).setDepth(-19);
       this.tweens.add({
         targets: drop,
         y: rainY + 150,
@@ -156,24 +172,24 @@ export class IslandScene extends Phaser.Scene {
 
   private createMistyWeather(w: number, h: number, config: any) {
     // Light sky with mist layer
-    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setDepth(-10);
+    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setDepth(-20);
 
     // Semi-transparent white overlay for mist effect
-    const mist = this.add.rectangle(w / 2, 200, w, h - 100, 0xffffff, 0.12).setDepth(-8);
+    const mist = this.add.rectangle(w / 2, 200, w, h - 100, 0xffffff, 0.1).setDepth(-18);
     this.tweens.add({
       targets: mist,
-      alpha: 0.18,
+      alpha: 0.16,
       duration: 3000,
       yoyo: true,
       repeat: -1,
     });
 
     // soft drifting mist shape
-    const mistShape = this.add.ellipse(w / 2, 100, 260, 60, 0xffffff, 0.5).setDepth(-9);
+    const mistShape = this.add.ellipse(w / 2, 100, 260, 60, 0xffffff, 0.42).setDepth(-19);
     this.tweens.add({
       targets: mistShape,
       y: 120,
-      alpha: 0.3,
+      alpha: 0.25,
       duration: 2500,
       yoyo: true,
       repeat: -1,
@@ -182,12 +198,12 @@ export class IslandScene extends Phaser.Scene {
 
   private createStarryNightWeather(w: number, h: number, config: any) {
     // Dark sky with stars
-    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setDepth(-10);
+    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setDepth(-20);
     // Scatter simple star points
     for (let i = 0; i < 18; i++) {
       const starX = 40 + (i % 6) * 70;
       const starY = 30 + Math.floor(i / 6) * 40;
-      const star = this.add.circle(starX, starY, 3, 0xfff7c9).setAlpha(0.9).setDepth(-9);
+      const star = this.add.circle(starX, starY, 3, 0xfff7c9).setAlpha(0.9).setDepth(-19);
       this.tweens.add({
         targets: star,
         alpha: 0.3,
@@ -198,123 +214,33 @@ export class IslandScene extends Phaser.Scene {
     }
   }
 
-  private createVectorTree(x: number, y: number, scale = 1) {
-    const shadow = this.add.ellipse(x, y + 4 * scale, 54 * scale, 13 * scale, 0x000000, 0.11).setDepth(y - 1);
-    const tree = this.add.container(x, y, [
-      this.add.rectangle(0, -24 * scale, 8 * scale, 30 * scale, 0x8b6244),
-      this.add.ellipse(0, -55 * scale, 38 * scale, 68 * scale, 0x8ebf88),
-      this.add.circle(-8 * scale, -68 * scale, 10 * scale, 0xa9d79c, 0.45),
-      this.add.circle(10 * scale, -46 * scale, 10 * scale, 0x6ea56d, 0.35),
-    ]);
-    tree.setDepth(y);
-    this.tweens.add({ targets: tree, angle: 2.5, duration: 1700 + Math.random() * 500, yoyo: true, repeat: -1 });
-    return { tree, shadow };
+  private addLakeHotspot(layout: IslandLayout) {
+    const lakeHotspot = this.add.ellipse(layout.lakeX, layout.lakeY, layout.baseSize * 0.23, layout.baseSize * 0.12, 0xffffff, 0.001);
+    lakeHotspot
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', () => emitIslandEvent('moxi-open-panel', 'lake'))
+      .setDepth(70);
+
+    const lakeLabel = this.add
+      .text(layout.lakeX, layout.lakeY + layout.baseSize * 0.012, '星光湖 ✨', {
+        fontFamily: 'sans-serif',
+        fontSize: '15px',
+        color: '#2f6b6f',
+        backgroundColor: 'rgba(255,255,255,0.34)',
+        padding: { x: 8, y: 3 },
+      })
+      .setOrigin(0.5)
+      .setDepth(78);
+
+    lakeLabel.setInteractive({ useHandCursor: true }).on('pointerdown', () => emitIslandEvent('moxi-open-panel', 'lake'));
   }
 
-  private drawOrganicBlob(graphics: Phaser.GameObjects.Graphics, cx: number, cy: number, points: Array<[number, number]>) {
-    graphics.beginPath();
-    graphics.moveTo(cx + points[0][0], cy + points[0][1]);
-    points.slice(1).forEach(([x, y]) => graphics.lineTo(cx + x, cy + y));
-    graphics.closePath();
-    graphics.fillPath();
-  }
-
-  private createIslandBase(layout: IslandLayout) {
-    const g = this.add.graphics();
-    const cx = layout.centerX;
-    const cy = layout.islandCenterY;
-
-    // Soft floating shadow under the island.
-    g.fillStyle(0xb9d6c0, 0.18);
-    g.fillEllipse(cx + 4, cy + 238, 326, 54);
-
-    // Warm uneven outer land. This replaces the perfect prototype oval.
-    g.fillStyle(0xfff3d8, 1);
-    this.drawOrganicBlob(g, cx, cy, [
-      [-112, -276],
-      [-28, -320],
-      [84, -302],
-      [162, -244],
-      [200, -136],
-      [188, 12],
-      [152, 164],
-      [74, 266],
-      [-4, 294],
-      [-92, 264],
-      [-154, 176],
-      [-192, 44],
-      [-184, -96],
-      [-154, -206],
-    ]);
-
-    // Main grass plateau, slightly tilted and asymmetric.
-    g.fillStyle(0xdff2d7, 1);
-    this.drawOrganicBlob(g, cx, cy, [
-      [-84, -218],
-      [10, -244],
-      [104, -218],
-      [150, -132],
-      [154, 20],
-      [126, 150],
-      [46, 232],
-      [-58, 218],
-      [-124, 126],
-      [-150, -12],
-      [-134, -140],
-    ]);
-
-    // Lower inner lawn for the lake and resident side, kept subtle so it reads as terrain not UI.
-    g.fillStyle(0xcbe7bf, 0.72);
-    this.drawOrganicBlob(g, cx + 20, cy + 48, [
-      [-86, -178],
-      [6, -202],
-      [112, -172],
-      [138, -62],
-      [112, 88],
-      [44, 174],
-      [-50, 164],
-      [-106, 72],
-      [-118, -58],
-    ]);
-
-    // Tiny light ledges hint at height without adding new gameplay elements.
-    g.fillStyle(0xffffff, 0.2);
-    g.fillEllipse(cx - 104, cy - 182, 96, 28);
-    g.fillEllipse(cx + 126, cy - 130, 76, 24);
-    g.fillEllipse(cx - 118, cy + 120, 72, 22);
-
-    g.setDepth(-12);
-  }
-
-  private createMainPath(layout: IslandLayout) {
-    const path = this.add.graphics();
-    const { centerX, forestY, lakeY, shopX, shopY, messageX, messageY, farmX, farmY } = layout;
-
-    // Main path stops at lake edges instead of drawing a hard stripe through the lake.
-    path.lineStyle(12, 0xf6edcf, 0.48);
-    path.beginPath();
-    path.moveTo(centerX, forestY + 40);
-    path.lineTo(centerX, lakeY - 62);
-    path.strokePath();
-
-    path.beginPath();
-    path.moveTo(centerX + 68, lakeY + 52);
-    path.lineTo(shopX - 8, shopY - 70);
-    path.strokePath();
-
-    // Soft side paths from lake edge to side zones.
-    path.lineStyle(10, 0xf8f2dc, 0.42);
-    path.beginPath();
-    path.moveTo(centerX - 82, lakeY - 6);
-    path.lineTo(messageX + 64, messageY + 4);
-    path.strokePath();
-
-    path.beginPath();
-    path.moveTo(centerX + 88, lakeY - 8);
-    path.lineTo(farmX - 50, farmY + 42);
-    path.strokePath();
-
-    path.setDepth(-4);
+  private addForestHotspot(layout: IslandLayout) {
+    const gatePlate = this.add.ellipse(0, 0, 150, 40, 0xffffff, 0.18).setStrokeStyle(2, 0xffffff, 0.28);
+    const gateText = this.add.text(0, 0, '森林探险区', { fontSize: '16px', color: '#315342' }).setOrigin(0.5);
+    const gateContainer = this.add.container(layout.forestX, layout.forestY, [gatePlate, gateText]);
+    gateContainer.setSize(170, 58).setInteractive({ useHandCursor: true }).on('pointerdown', () => emitIslandEvent('moxi-open-panel', 'forest'));
+    gateContainer.setDepth(90);
   }
 
   create() {
@@ -328,57 +254,19 @@ export class IslandScene extends Phaser.Scene {
     // Apply weather effects
     this.createWeatherEffects(w, h);
 
-    // Base island landscape first. It defines the world before any buildings are placed.
-    this.createIslandBase(layout);
-
-    // Main walking path scaffold around the central lake.
-    this.createMainPath(layout);
-
-    // Clouds (fewer in rainy/misty weather) - simple fallback until PNGs are cleaned
-    const cloudCount = ['雨天', '林间薄雾'].includes(this.currentWeather) ? 1 : 3;
-    for (let i = 0; i < cloudCount; i++) {
-      const cx = 90 + i * 170;
-      const cy = layout.mapTop - 22 + (i % 2) * 24;
-      const cloud = this.add.ellipse(cx, cy, 104, 34, 0xffffff, 0.62).setAlpha(0.8).setDepth(-3);
-      this.tweens.add({ targets: cloud, x: cx + 42, duration: 12000 + i * 3500, yoyo: true, repeat: -1 });
+    // The painted baseland owns terrain, lake, paths, trees, flowers, and cliff edges.
+    if (this.textures.exists('baseland')) {
+      this.add.image(layout.baseX, layout.baseY, 'baseland').setOrigin(0.5).setDisplaySize(layout.baseSize, layout.baseSize).setDepth(-12);
     }
 
-    // Trees: compact handmade vector fallback, kept around the island rim instead of the center.
-    const treePositions = [
-      [76, layout.mapTop + 18, 0.72],
-      [184, layout.mapTop + 18, 0.76],
-      [308, layout.mapTop + 18, 0.78],
-      [438, layout.mapTop + 18, 0.74],
-      [88, layout.lakeY - 122, 0.62],
-      [198, layout.shopY + 10, 0.54],
-      [332, layout.lakeY - 108, 0.58],
-      [455, layout.lakeY - 116, 0.56],
-    ] as const;
-    treePositions.forEach(([tx, ty, scale]) => this.createVectorTree(tx, ty, scale));
+    this.addForestHotspot(layout);
+    this.addLakeHotspot(layout);
 
-    // Forest gate interactive. Keep fallback local to the container to avoid double-positioned green blocks.
-    const gatePlate = this.add.ellipse(0, 0, 170, 46, 0xffffff, 0.26).setStrokeStyle(2, 0xffffff, 0.38);
-    const gateText = this.add.text(0, 0, '森林探险区', { fontSize: '18px', color: '#315342' }).setOrigin(0.5);
-    const gateContainer = this.add.container(layout.centerX, layout.forestY, [gatePlate, gateText]);
-    gateContainer.setSize(180, 70).setInteractive({ useHandCursor: true }).on('pointerdown', () => emitIslandEvent('moxi-open-panel', 'forest'));
-    gateContainer.setDepth(145);
-
-    // Central lake: first real visual anchor of the island.
-    const lakeX = layout.centerX;
-    const lakeY = layout.lakeY;
-    const lakeShadow = this.add.ellipse(lakeX, lakeY + 7, 232, 98, 0x5fa7a7, 0.14).setDepth(74);
-    const lakeBody = this.add.ellipse(lakeX, lakeY, 208, 92, 0x81d4fa, 0.92).setStrokeStyle(4, 0xe8fbff).setDepth(75);
-    const lakeGlow = this.add.ellipse(lakeX - 22, lakeY - 12, 92, 26, 0xffffff, 0.24).setDepth(76);
-    const lakeLabel = this.add.text(lakeX, lakeY, '星光湖 ✨', { fontSize: '17px', color: '#26566b' }).setOrigin(0.5).setDepth(77);
-    lakeBody.setInteractive({ useHandCursor: true }).on('pointerdown', () => emitIslandEvent('moxi-open-panel', 'lake'));
-    lakeLabel.setInteractive({ useHandCursor: true }).on('pointerdown', () => emitIslandEvent('moxi-open-panel', 'lake'));
-    this.tweens.add({ targets: [lakeBody, lakeGlow, lakeShadow], scaleX: 1.04, alpha: 0.76, duration: 1500, yoyo: true, repeat: -1 });
-
-    // Buildings (keep original interactions, tune positions around the UI-safe core)
-    new BuildingSprite(this, layout.centerX, layout.taskY, '任务小屋', 0xf7d794, () => emitIslandEvent('moxi-open-panel', 'tasks'), 'task-cottage');
+    // Buildings remain as functional placeholders until each final PNG is cleaned and enabled one by one.
+    new BuildingSprite(this, layout.taskX, layout.taskY, '任务小屋', 0xf7d794, () => emitIslandEvent('moxi-open-panel', 'tasks'), 'task-cottage');
     new BuildingSprite(this, layout.messageX, layout.messageY, '留言板', 0xc9a06a, () => emitIslandEvent('moxi-open-panel', 'messages'), 'message-board');
     new BuildingSprite(this, layout.farmX, layout.farmY, '农场区', 0xb8df72, () => emitIslandEvent('moxi-open-panel', 'farm'), 'farm-plot');
-    new FarmPlotSprite(this, layout.farmX, layout.farmY + 58, 'farm-plot');
+    new FarmPlotSprite(this, layout.farmPlotX, layout.farmPlotY, 'farm-plot');
     new BuildingSprite(this, layout.shopX, layout.shopY, '千灯铺', 0xffc9de, () => emitIslandEvent('moxi-open-panel', 'shop'), 'lantern-shop');
 
     residents.filter((resident) => resident.isOutsideToday).forEach((resident) => new ResidentSprite(this, resident, () => emitIslandEvent('moxi-open-resident', resident.id)));
