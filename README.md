@@ -32,6 +32,13 @@ npm run build
 
 ## 内容与功能扩展
 
+### 美术资源接入方式
+
+- PNG 素材放在 `public/assets/generated/` 内。
+- 资源 key 与路径映射集中配置在 `src/content/visualAssets.ts`。
+- Phaser 场景在 `src/game/scenes/IslandScene.ts` 的 `preload()` 阶段通过 `visualAssets` 加载这些图片。
+- 运行时如果某张图片缺失，会保留原有 emoji / 占位图形作为 fallback，避免出现运行时报错。
+
 ### 背包系统
 
 `InventoryItem` 类型定义位于 [src/types/game.ts](src/types/game.ts)，包含：

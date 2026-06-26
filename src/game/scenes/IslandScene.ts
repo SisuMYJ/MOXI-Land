@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { islandTiles } from '../../content/islandTiles';
 import { weatherConfigs } from '../../content/weather';
 import { residents } from '../../content/residents';
+import { visualAssets, visualAssetEntries } from '../../content/visualAssets';
 import { BuildingSprite } from '../objects/BuildingSprite';
 import { FarmPlotSprite } from '../objects/FarmPlotSprite';
 import { ResidentSprite } from '../objects/ResidentSprite';
@@ -141,6 +142,14 @@ export class IslandScene extends Phaser.Scene {
     }
   }
 
+  preload() {
+    visualAssetEntries.forEach(([key, path]) => {
+      if (!this.textures.exists(key)) {
+        this.load.image(key, path);
+      }
+    });
+  }
+
   create() {
     const w = this.scale.width;
     const h = this.scale.height;
@@ -160,30 +169,67 @@ export class IslandScene extends Phaser.Scene {
     this.add.ellipse(w / 2, h / 2 + 40, 360, 500, 0xa8e6a1).setFillStyle(0xa8e6a1, 0.98);
 
     // Clouds (fewer in rainy/misty weather)
+    const cloudKeys = ['cloud-01', 'cloud-02'];
     const cloudCount = ['雨天', '林间薄雾'].includes(this.currentWeather) ? 1 : 3;
     for (let i = 0; i < cloudCount; i++) {
-      const c = this.add.text(80 + i * 210, 160 + i * 26, '☁️', { fontSize: '38px' }).setAlpha(0.75);
-      this.tweens.add({ targets: c, x: 80 + i * 210 + 80, duration: 12000 + i * 3500, yoyo: true, repeat: -1 });
+      const cloudKey = cloudKeys[i % cloudKeys.length];
+      const cloudX = 80 + i * 210;
+      const cloudY = 140 + (i % 2) * 30;
+      let cloud: Phaser.GameObjects.GameObject;
+
+      if (this.textures.exists(cloudKey)) {
+        cloud = this.add.image(cloudX, cloudY, cloudKey).setDisplaySize(160, 72).setAlpha(0.8).setDepth(-9).setOrigin(0.5);
+      } else {
+        cloud = this.add.text(cloudX, cloudY, '☁️', { fontSize: '38px' }).setAlpha(0.75).setDepth(-9);
+      }
+
+      this.tweens.add({ targets: cloud, x: cloudX + 80, duration: 12000 + i * 3500, yoyo: true, repeat: -1 });
     }
 
     // Trees
-    for (let i = 0; i < 11; i++) {
-      const t = this.add.text(70 + (i % 4) * 125, 150 + Math.floor(i / 4) * 120, '🌳', { fontSize: '34px' });
-      this.tweens.add({ targets: t, angle: 4, duration: 1100 + i * 90, yoyo: true, repeat: -1 });
+    for (let i = 0; i < 8; i++) {
+      const treeX = 70 + (i % 4) * 125;
+      const treeY = 150 + Math.floor(i / 4) * 120;
+      let tree: Phaser.GameObjects.GameObject;
+
+      if (this.textures.exists('tree-01')) {
+        tree = this.add.image(treeX, treeY, 'tree-01').setDisplaySize(84, 108).setOrigin(0.5);
+      } else {
+        tree = this.add.text(treeX, treeY, '🌳', { fontSize: '34px' }).setOrigin(0.5);
+      }
+      this.tweens.add({ targets: tree, angle: 4, duration: 1600 + i * 120, yoyo: true, repeat: -1 });
     }
 
-    this.add.text(w / 2, 118, '森林探险区', { fontSize: '18px', color: '#315342' }).setOrigin(0.5).setInteractive({ useHandCursor: true }).on('pointerdown', () => emitIslandEvent('moxi-open-panel', 'forest'));
+    const forestGateX = w / 2;
+    const forestGateY = 118;
+    let forestGate: Phaser.GameObjects.GameObject;
+    if (this.textures.exists('forest-gate')) {
+      forestGate = this.add.image(forestGateX, forestGateY, 'forest-gate').setDisplaySize(160, 90).setOrigin(0.5);
+    } else {
+      forestGate = this.add.text(forestGateX, forestGateY, '森林探险区', { fontSize: '18px', color: '#315342' }).setOrigin(0.5);
+    }
+    const gateContainer = this.add.container(forestGateX, forestGateY, [forestGate]);
+    gateContainer.setSize(180, 100).setInteractive({ useHandCursor: true }).on('pointerdown', () => emitIslandEvent('moxi-open-panel', 'forest'));
 
-    new BuildingSprite(this, w / 2, 340, '任务小屋', 0xf7d794, () => emitIslandEvent('moxi-open-panel', 'tasks'));
-    new BuildingSprite(this, 150, 255, '留言板', 0xc9a06a, () => emitIslandEvent('moxi-open-panel', 'messages'));
-    new BuildingSprite(this, 390, 255, '农场区', 0xb8df72, () => emitIslandEvent('moxi-open-panel', 'farm'));
-    new FarmPlotSprite(this, 390, 305);
-    new BuildingSprite(this, 390, 540, '千灯铺', 0xffc9de, () => emitIslandEvent('moxi-open-panel', 'shop'));
+    new BuildingSprite(this, w / 2, 340, '任务小屋', 0xf7d794, () => emitIslandEvent('moxi-open-panel', 'tasks'), 'task-cottage');
+    new BuildingSprite(this, 150, 255, '留言板', 0xc9a06a, () => emitIslandEvent('moxi-open-panel', 'messages'), 'message-board');
+    new BuildingSprite(this, 390, 255, '农场区', 0xb8df72, () => emitIslandEvent('moxi-open-panel', 'farm'), 'farm-plot');
+    new FarmPlotSprite(this, 390, 305, 'farm-plot');
+    new BuildingSprite(this, 390, 540, '千灯铺', 0xffc9de, () => emitIslandEvent('moxi-open-panel', 'shop'), 'lantern-shop');
 
     this.add.text(150, 545, '居民活动区', { fontSize: '17px', color: '#315342' }).setOrigin(0.5);
 
-    const lake = this.add.ellipse(w / 2, 690, 190, 82, 0x81d4fa, 0.9).setStrokeStyle(4, 0xe8fbff);
-    this.add.text(w / 2, 690, '星光湖 ✨', { fontSize: '18px', color: '#26566b' }).setOrigin(0.5).setInteractive({ useHandCursor: true }).on('pointerdown', () => emitIslandEvent('moxi-open-panel', 'lake'));
+    const lakeX = w / 2;
+    const lakeY = 690;
+    let lake: Phaser.GameObjects.GameObject;
+    if (this.textures.exists('starlight-lake')) {
+      lake = this.add.image(lakeX, lakeY, 'starlight-lake').setDisplaySize(222, 124).setOrigin(0.5);
+    } else {
+      lake = this.add.ellipse(lakeX, lakeY, 190, 82, 0x81d4fa, 0.9).setStrokeStyle(4, 0xe8fbff);
+    }
+    const lakeLabel = this.add.text(lakeX, lakeY + 48, '星光湖 ✨', { fontSize: '18px', color: '#26566b' }).setOrigin(0.5);
+    const lakeContainer = this.add.container(lakeX, lakeY, [lake, lakeLabel]);
+    lakeContainer.setSize(240, 140).setInteractive({ useHandCursor: true }).on('pointerdown', () => emitIslandEvent('moxi-open-panel', 'lake'));
     this.tweens.add({ targets: lake, scaleX: 1.08, alpha: 0.72, duration: 1500, yoyo: true, repeat: -1 });
 
     islandTiles.forEach((tile) => {
