@@ -8,9 +8,10 @@
 - 云朵、树木、湖水、居民具备轻量动态。
 - 任务完成获得星星币；商店购买消耗星星币或月亮币。
 - 农场一键浇水喂食消耗星星币，成熟资源出售获得月亮币。
-- 留言板每日查看消耗月亮币并绑定日期。
+- 留言板每日查看消耗月亮币并绑定日期，每天从内容池固定抽取多条。
 - 森林/湖泊探索故事雏形，消耗月亮币逐日推进。
-- 5 位原创动物居民，支持聊天与送礼占位，好感度保存。
+- 5 位原创动物居民，支持按居民、天气、好感度抽取聊天台词，聊天与送礼好感度保存。
+- 每日天气、外出居民、商店商品、Lumo 台词按日期固定刷新。
 - 关键进度使用 localStorage 持久化。
 
 ## 安装与运行
@@ -28,8 +29,27 @@ npm run build
 
 ## 内容扩展
 
-所有核心内容配置位于 `src/content/`：任务、商品、居民、农场、留言、探索故事、礼物与天气都可在不改 UI 核心逻辑的前提下扩展。
+所有核心内容配置位于 `src/content/`：任务、商品、居民、农场、探索故事、礼物与天气都可在不改 UI 核心逻辑的前提下扩展。内容系统壳子 v1 额外拆出了以下每日内容池：
+
+- `src/content/boardMessages.ts`：留言板消息池。每条消息需要稳定 `id` 与 `text`，可选 `tags` 方便后续按玩法筛选；留言板每天通过 `dailyPicker` 固定抽取多条。
+- `src/content/residentDialogues.ts`：居民聊天台词池。通过 `residentId`、`weather` 与 `friendshipBand` 描述触发条件；新增居民或天气时，只需补充对应台词对象。
+- `src/content/lumoLines.ts`：千灯铺店主 Lumo 每日一句。每条台词保留稳定 `id`，每日固定抽取一句。
+- `src/game/systems/dailyPicker.ts`：通用每日抽取工具。传入内容数组、日期命名空间与数量，即可得到同一天稳定、不同天刷新的结果。
+
+商店商品仍在 `src/content/shopItems.ts` 维护，当前每天从可用商品池固定抽取 4 个展示；种子、鱼苗与幼崽会进入农场，礼物与碎片会进入背包。未来可继续在商品对象上扩展节日、稀有度或解锁条件字段。
+
+## 当前美术与内容占位
+
+Prototype v1 目前使用 Phaser 绘制的森林童话风矢量占位和 CSS 作为统一视觉层：动物居民、建筑、农场与地图板块都还不是最终美术资源。生成图若通过透明度审查，可在 `src/content/visualAssets.ts` 标记为 usable 后由 Phaser 预加载并替换矢量占位。
+
+剧情、留言、居民对话和 Lumo 台词都走 `src/content/` 下的配置文件；当前只保留少量占位文案，适合后续逐步替换为正式文案。功能系统会尽量避免把创意内容写死在组件里。
 
 ## Prototype v1 说明
 
 当前版本不接入真实 AI API、不包含后端、登录或最终美术资源。AI 居民聊天、AI 留言板、AI 探索故事与 AI 店主鼓励已在类型和内容结构上预留。
+
+## Visual art pipeline
+
+Generated PNGs live in `public/assets/generated/`, but the scene only renders assets marked as usable in `src/content/visualAssets.ts`. Each object entry records its image path, map position, scale, origin, label offset, interaction footprint and depth rule so art can be tuned without rewriting game logic.
+
+Current generated images are listed in `docs/visual-asset-audit.md`. Assets with baked checkerboard transparency are blocked from scene rendering until regenerated with real alpha transparency. While those files are blocked, the island uses a cozy vector fallback style with soft shadows, cream paths and layered grass shapes so gameplay panels and store logic continue to work.
