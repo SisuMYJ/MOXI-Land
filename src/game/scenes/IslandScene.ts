@@ -47,8 +47,8 @@ export class IslandScene extends Phaser.Scene {
     // Keep the island away from UI overlays before doing detailed art polish.
     // Top: HUD/weather pills. Bottom: future navigation/toast/large panel breathing room.
     const hudSafeTop = 88;
-    const bottomSafe = 78;
-    const mapTop = 172;
+    const bottomSafe = 82;
+    const mapTop = 174;
     const mapBottom = Math.max(620, h - bottomSafe);
     const islandCenterY = (mapTop + mapBottom) / 2 + 18;
     const lakeY = Phaser.Math.Clamp(islandCenterY + 34, 430, mapBottom - 165);
@@ -62,15 +62,15 @@ export class IslandScene extends Phaser.Scene {
       islandCenterY,
       forestY: mapTop - 38,
       lakeY,
-      taskY: lakeY - 138,
-      messageX: 142,
-      messageY: lakeY - 92,
-      farmX: w - 152,
+      taskY: lakeY - 148,
+      messageX: 150,
+      messageY: lakeY - 82,
+      farmX: w - 196,
       farmY: lakeY - 116,
-      shopX: w - 178,
-      shopY: Math.min(mapBottom - 54, lakeY + 160),
-      residentLabelX: 146,
-      residentLabelY: Math.min(mapBottom - 76, lakeY + 138),
+      shopX: w - 188,
+      shopY: Math.min(mapBottom - 62, lakeY + 164),
+      residentLabelX: 150,
+      residentLabelY: Math.min(mapBottom - 80, lakeY + 138),
     };
   }
 
@@ -216,23 +216,28 @@ export class IslandScene extends Phaser.Scene {
     const path = this.add.graphics();
     const { centerX, forestY, lakeY, shopX, shopY, messageX, messageY, farmX, farmY } = layout;
 
-    path.lineStyle(18, 0xf6edcf, 0.7);
+    // Main path stops at lake edges instead of drawing a hard stripe through the lake.
+    path.lineStyle(12, 0xf6edcf, 0.48);
     path.beginPath();
-    path.moveTo(centerX, forestY + 36);
-    path.lineTo(centerX, lakeY - 96);
-    path.lineTo(centerX, lakeY + 56);
-    path.lineTo(shopX, shopY - 70);
-    path.strokePath();
-
-    path.lineStyle(14, 0xf8f2dc, 0.56);
-    path.beginPath();
-    path.moveTo(centerX, lakeY - 8);
-    path.lineTo(messageX + 62, messageY + 4);
+    path.moveTo(centerX, forestY + 40);
+    path.lineTo(centerX, lakeY - 54);
     path.strokePath();
 
     path.beginPath();
-    path.moveTo(centerX, lakeY - 10);
-    path.lineTo(farmX - 42, farmY + 42);
+    path.moveTo(centerX + 60, lakeY + 46);
+    path.lineTo(shopX - 8, shopY - 70);
+    path.strokePath();
+
+    // Soft side paths from lake edge to side zones.
+    path.lineStyle(10, 0xf8f2dc, 0.42);
+    path.beginPath();
+    path.moveTo(centerX - 72, lakeY - 6);
+    path.lineTo(messageX + 64, messageY + 4);
+    path.strokePath();
+
+    path.beginPath();
+    path.moveTo(centerX + 76, lakeY - 8);
+    path.lineTo(farmX - 50, farmY + 42);
     path.strokePath();
 
     path.setDepth(-4);
@@ -317,10 +322,10 @@ export class IslandScene extends Phaser.Scene {
       const isUnlocked = tile.status === 'unlocked';
       const hex = this.add.polygon(tile.position.x, tile.position.y, [35, 0, 17, 30, -17, 30, -35, 0, -17, -30, 17, -30], isUnlocked ? 0xfef3b7 : 0xffffff, isUnlocked ? 0.35 : 0.18)
         .setStrokeStyle(2, isUnlocked ? 0xf7c96b : 0xffffff, 0.65)
-        .setDepth(tile.position.y - 2);
+        .setDepth(62);
 
       if (!isUnlocked) {
-        this.add.text(tile.position.x, tile.position.y, '🔒', { fontSize: '15px' }).setOrigin(0.5).setDepth(tile.position.y - 1);
+        this.add.text(tile.position.x, tile.position.y, '🔒', { fontSize: '15px' }).setOrigin(0.5).setDepth(63);
       }
 
       hex.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
