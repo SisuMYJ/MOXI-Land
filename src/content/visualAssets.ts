@@ -19,6 +19,19 @@ const blocked = (asset: Omit<VisualAsset, 'status'>): VisualAsset => ({
 });
 
 export const visualAssets: Record<string, VisualAsset> = {
+  // Baseland is the only generated PNG currently allowed into the scene.
+  // It was uploaded to main first, so this branch temporarily loads it from the public raw URL.
+  // When the branch also contains public/assets/generated/baseland.png, this can become assets/generated/baseland.png.
+  'baseland': {
+    key: 'baseland',
+    path: 'https://raw.githubusercontent.com/SisuMYJ/MOXI-Land/main/public/assets/generated/baseland.png',
+    scale: 1,
+    origin: [0.5, 0.5],
+    footprint: { w: 520, h: 520 },
+    depthRule: 'manual',
+    status: 'usable',
+  },
+
   'cloud-01': blocked({ key: 'cloud-01', path: 'assets/generated/cloud-01.png', scale: 0.7, origin: [0.5, 0.5] }),
   'cloud-02': blocked({ key: 'cloud-02', path: 'assets/generated/cloud-02.png', scale: 0.7, origin: [0.5, 0.5] }),
 
