@@ -211,6 +211,81 @@ export class IslandScene extends Phaser.Scene {
     return { tree, shadow };
   }
 
+  private drawOrganicBlob(graphics: Phaser.GameObjects.Graphics, cx: number, cy: number, points: Array<[number, number]>) {
+    graphics.beginPath();
+    graphics.moveTo(cx + points[0][0], cy + points[0][1]);
+    points.slice(1).forEach(([x, y]) => graphics.lineTo(cx + x, cy + y));
+    graphics.closePath();
+    graphics.fillPath();
+  }
+
+  private createIslandBase(layout: IslandLayout) {
+    const g = this.add.graphics();
+    const cx = layout.centerX;
+    const cy = layout.islandCenterY;
+
+    // Soft floating shadow under the island.
+    g.fillStyle(0xb9d6c0, 0.18);
+    g.fillEllipse(cx + 4, cy + 238, 326, 54);
+
+    // Warm uneven outer land. This replaces the perfect prototype oval.
+    g.fillStyle(0xfff3d8, 1);
+    this.drawOrganicBlob(g, cx, cy, [
+      [-112, -276],
+      [-28, -320],
+      [84, -302],
+      [162, -244],
+      [200, -136],
+      [188, 12],
+      [152, 164],
+      [74, 266],
+      [-4, 294],
+      [-92, 264],
+      [-154, 176],
+      [-192, 44],
+      [-184, -96],
+      [-154, -206],
+    ]);
+
+    // Main grass plateau, slightly tilted and asymmetric.
+    g.fillStyle(0xdff2d7, 1);
+    this.drawOrganicBlob(g, cx, cy, [
+      [-84, -218],
+      [10, -244],
+      [104, -218],
+      [150, -132],
+      [154, 20],
+      [126, 150],
+      [46, 232],
+      [-58, 218],
+      [-124, 126],
+      [-150, -12],
+      [-134, -140],
+    ]);
+
+    // Lower inner lawn for the lake and resident side, kept subtle so it reads as terrain not UI.
+    g.fillStyle(0xcbe7bf, 0.72);
+    this.drawOrganicBlob(g, cx + 20, cy + 48, [
+      [-86, -178],
+      [6, -202],
+      [112, -172],
+      [138, -62],
+      [112, 88],
+      [44, 174],
+      [-50, 164],
+      [-106, 72],
+      [-118, -58],
+    ]);
+
+    // Tiny light ledges hint at height without adding new gameplay elements.
+    g.fillStyle(0xffffff, 0.2);
+    g.fillEllipse(cx - 104, cy - 182, 96, 28);
+    g.fillEllipse(cx + 126, cy - 130, 76, 24);
+    g.fillEllipse(cx - 118, cy + 120, 72, 22);
+
+    g.setDepth(-12);
+  }
+
   private createMainPath(layout: IslandLayout) {
     const path = this.add.graphics();
     const { centerX, forestY, lakeY, shopX, shopY, messageX, messageY, farmX, farmY } = layout;
@@ -253,17 +328,8 @@ export class IslandScene extends Phaser.Scene {
     // Apply weather effects
     this.createWeatherEffects(w, h);
 
-    // Base island landscape - layered organic shapes, fitted inside the UI-safe map area.
-    const g = this.add.graphics();
-    // soft cream rim
-    g.fillStyle(0xfff6df, 1);
-    g.fillEllipse(layout.centerX, layout.islandCenterY, 430, 550);
-    // layered grass blobs
-    g.fillStyle(0xdff3d8, 1);
-    g.fillEllipse(layout.centerX - 6, layout.islandCenterY + 4, 342, 430);
-    g.fillStyle(0xcfe9c4, 1);
-    g.fillEllipse(layout.centerX + 18, layout.islandCenterY + 24, 260, 330);
-    g.setDepth(-12);
+    // Base island landscape first. It defines the world before any buildings are placed.
+    this.createIslandBase(layout);
 
     // Main walking path scaffold around the central lake.
     this.createMainPath(layout);
