@@ -1,5 +1,4 @@
 import Phaser from 'phaser';
-import { islandTiles } from '../../content/islandTiles';
 import { weatherConfigs } from '../../content/weather';
 import { residents } from '../../content/residents';
 import { assetList } from '../../content/visualAssets';
@@ -220,23 +219,23 @@ export class IslandScene extends Phaser.Scene {
     path.lineStyle(12, 0xf6edcf, 0.48);
     path.beginPath();
     path.moveTo(centerX, forestY + 40);
-    path.lineTo(centerX, lakeY - 54);
+    path.lineTo(centerX, lakeY - 62);
     path.strokePath();
 
     path.beginPath();
-    path.moveTo(centerX + 60, lakeY + 46);
+    path.moveTo(centerX + 68, lakeY + 52);
     path.lineTo(shopX - 8, shopY - 70);
     path.strokePath();
 
     // Soft side paths from lake edge to side zones.
     path.lineStyle(10, 0xf8f2dc, 0.42);
     path.beginPath();
-    path.moveTo(centerX - 72, lakeY - 6);
+    path.moveTo(centerX - 82, lakeY - 6);
     path.lineTo(messageX + 64, messageY + 4);
     path.strokePath();
 
     path.beginPath();
-    path.moveTo(centerX + 76, lakeY - 8);
+    path.moveTo(centerX + 88, lakeY - 8);
     path.lineTo(farmX - 50, farmY + 42);
     path.strokePath();
 
@@ -301,13 +300,13 @@ export class IslandScene extends Phaser.Scene {
     // Central lake: first real visual anchor of the island.
     const lakeX = layout.centerX;
     const lakeY = layout.lakeY;
-    const lakeShadow = this.add.ellipse(lakeX, lakeY + 6, 210, 88, 0x5fa7a7, 0.14).setDepth(74);
-    const lakeBody = this.add.ellipse(lakeX, lakeY, 188, 82, 0x81d4fa, 0.92).setStrokeStyle(4, 0xe8fbff).setDepth(75);
-    const lakeGlow = this.add.ellipse(lakeX - 18, lakeY - 10, 86, 24, 0xffffff, 0.24).setDepth(76);
+    const lakeShadow = this.add.ellipse(lakeX, lakeY + 7, 232, 98, 0x5fa7a7, 0.14).setDepth(74);
+    const lakeBody = this.add.ellipse(lakeX, lakeY, 208, 92, 0x81d4fa, 0.92).setStrokeStyle(4, 0xe8fbff).setDepth(75);
+    const lakeGlow = this.add.ellipse(lakeX - 22, lakeY - 12, 92, 26, 0xffffff, 0.24).setDepth(76);
     const lakeLabel = this.add.text(lakeX, lakeY, '星光湖 ✨', { fontSize: '17px', color: '#26566b' }).setOrigin(0.5).setDepth(77);
     lakeBody.setInteractive({ useHandCursor: true }).on('pointerdown', () => emitIslandEvent('moxi-open-panel', 'lake'));
     lakeLabel.setInteractive({ useHandCursor: true }).on('pointerdown', () => emitIslandEvent('moxi-open-panel', 'lake'));
-    this.tweens.add({ targets: [lakeBody, lakeGlow, lakeShadow], scaleX: 1.05, alpha: 0.76, duration: 1500, yoyo: true, repeat: -1 });
+    this.tweens.add({ targets: [lakeBody, lakeGlow, lakeShadow], scaleX: 1.04, alpha: 0.76, duration: 1500, yoyo: true, repeat: -1 });
 
     // Buildings (keep original interactions, tune positions around the UI-safe core)
     new BuildingSprite(this, layout.centerX, layout.taskY, '任务小屋', 0xf7d794, () => emitIslandEvent('moxi-open-panel', 'tasks'), 'task-cottage');
@@ -315,28 +314,6 @@ export class IslandScene extends Phaser.Scene {
     new BuildingSprite(this, layout.farmX, layout.farmY, '农场区', 0xb8df72, () => emitIslandEvent('moxi-open-panel', 'farm'), 'farm-plot');
     new FarmPlotSprite(this, layout.farmX, layout.farmY + 58, 'farm-plot');
     new BuildingSprite(this, layout.shopX, layout.shopY, '千灯铺', 0xffc9de, () => emitIslandEvent('moxi-open-panel', 'shop'), 'lantern-shop');
-
-    this.add.text(layout.residentLabelX, layout.residentLabelY, '居民活动区', { fontSize: '17px', color: '#315342' }).setOrigin(0.5).setDepth(555);
-
-    islandTiles.forEach((tile) => {
-      const isUnlocked = tile.status === 'unlocked';
-      const hex = this.add.polygon(tile.position.x, tile.position.y, [35, 0, 17, 30, -17, 30, -35, 0, -17, -30, 17, -30], isUnlocked ? 0xfef3b7 : 0xffffff, isUnlocked ? 0.35 : 0.18)
-        .setStrokeStyle(2, isUnlocked ? 0xf7c96b : 0xffffff, 0.65)
-        .setDepth(62);
-
-      if (!isUnlocked) {
-        this.add.text(tile.position.x, tile.position.y, '🔒', { fontSize: '15px' }).setOrigin(0.5).setDepth(63);
-      }
-
-      hex.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
-        if (isUnlocked) {
-          emitIslandEvent('moxi-open-panel', 'island');
-          return;
-        }
-        emitIslandEvent('moxi-open-panel', 'island');
-        emitIslandEvent('moxi-toast', `未来可解锁：${tile.name}`);
-      });
-    });
 
     residents.filter((resident) => resident.isOutsideToday).forEach((resident) => new ResidentSprite(this, resident, () => emitIslandEvent('moxi-open-resident', resident.id)));
   }
