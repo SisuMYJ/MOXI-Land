@@ -209,6 +209,19 @@ export class IslandScene extends Phaser.Scene {
     }
   }
 
+  private createFallbackBase(layout: IslandLayout) {
+    const g = this.add.graphics();
+    g.fillStyle(0xfff4dc, 1);
+    g.fillEllipse(layout.baseX, layout.baseY + layout.baseSize * 0.02, layout.baseSize * 0.86, layout.baseSize * 0.68);
+    g.fillStyle(0xdff2d7, 0.92);
+    g.fillEllipse(layout.baseX, layout.baseY, layout.baseSize * 0.68, layout.baseSize * 0.52);
+    g.fillStyle(0x8bd9f3, 0.78);
+    g.fillEllipse(layout.lakeX, layout.lakeY, layout.baseSize * 0.26, layout.baseSize * 0.13);
+    g.lineStyle(4, 0xf2ffff, 0.78);
+    g.strokeEllipse(layout.lakeX, layout.lakeY, layout.baseSize * 0.26, layout.baseSize * 0.13);
+    g.setDepth(-12);
+  }
+
   private addLakeHotspot(layout: IslandLayout) {
     const lakeHotspot = this.add.ellipse(layout.lakeX, layout.lakeY, layout.baseSize * 0.23, layout.baseSize * 0.12, 0xffffff, 0.001);
     lakeHotspot
@@ -252,6 +265,8 @@ export class IslandScene extends Phaser.Scene {
     // The painted baseland owns terrain, lake, paths, trees, flowers, and cliff edges.
     if (this.textures.exists('baseland')) {
       this.add.image(layout.baseX, layout.baseY, 'baseland').setOrigin(0.5).setDisplaySize(layout.baseSize, layout.baseSize).setDepth(-12);
+    } else {
+      this.createFallbackBase(layout);
     }
 
     this.addForestHotspot(layout);
