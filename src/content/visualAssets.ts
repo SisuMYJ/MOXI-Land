@@ -11,7 +11,7 @@ export type VisualAsset = {
   status: 'usable' | 'blocked-checkerboard' | 'reference-only';
 };
 
-const assetVersion = 'cleaned-asset-refresh-20260626-01';
+const assetVersion = 'cleaned-asset-refresh-20260626-02';
 const generatedUrl = (fileName: string) =>
   `https://raw.githubusercontent.com/SisuMYJ/MOXI-Land/main/public/assets/generated/${fileName}?v=${assetVersion}`;
 
@@ -29,9 +29,9 @@ const usable = (asset: Omit<VisualAsset, 'status'>): VisualAsset => ({
 
 export const visualAssets: Record<string, VisualAsset> = {
   // Loaded from main for now because cleaned PNGs were uploaded there through the GitHub UI.
-  // After this branch is merged, these paths can be changed back to local assets/generated/*.png.
+  // The texture key is versioned to force Phaser/browser to reload the baseland after failed earlier loads.
   'baseland': usable({
-    key: 'baseland',
+    key: 'baseland-v2',
     path: generatedUrl('baseland.png'),
     scale: 1,
     origin: [0.5, 0.5],
