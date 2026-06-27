@@ -8,7 +8,8 @@ import { FarmPlotSprite } from '../objects/FarmPlotSprite';
 import { ResidentSprite } from '../objects/ResidentSprite';
 import { emitIslandEvent } from '../systems/interactionSystem';
 
-const BASELAND_TEXTURE_KEY = 'baseland-v2';
+const BASELAND_TEXTURE_KEY = 'baseland-portrait-v1';
+const BASELAND_ASPECT = 1440 / 2520;
 
 type IslandLayout = {
   centerX: number;
@@ -17,6 +18,10 @@ type IslandLayout = {
   baseX: number;
   baseY: number;
   baseSize: number;
+  bgX: number;
+  bgY: number;
+  bgW: number;
+  bgH: number;
   forestX: number;
   forestY: number;
   lakeX: number;
@@ -47,38 +52,40 @@ export class IslandScene extends Phaser.Scene {
   }
 
   private getLayout(w: number, h: number): IslandLayout {
-    // Let the painted baseland dominate the first screen while keeping a compact/mobile cap.
+    // Portrait baseland is a full sky/ocean/island scene. Desktop gets a centered portrait stage;
+    // mobile gets a wider crop so the island still feels substantial.
     const isCompact = w < 700;
-    const mapTop = isCompact ? 124 : 126;
-    const mapBottom = Math.max(isCompact ? 650 : 680, h - (isCompact ? 24 : 28));
-    const availableHeight = mapBottom - mapTop;
-    const baseSize = Phaser.Math.Clamp(
-      Math.min(w * (isCompact ? 1.34 : 0.92), availableHeight * (isCompact ? 1.06 : 1.12)),
-      isCompact ? 470 : 600,
-      isCompact ? 570 : 760
-    );
-    const baseX = w / 2;
-    const baseY = mapTop + baseSize * (isCompact ? 0.515 : 0.5);
+    const mapTop = 0;
+    const mapBottom = h;
+    const bgW = Phaser.Math.Clamp(w * (isCompact ? 1.1 : 0.72), isCompact ? 410 : 720, isCompact ? 540 : 860);
+    const bgH = bgW / BASELAND_ASPECT;
+    const bgX = w / 2;
+    const bgTop = isCompact ? -70 : -170;
+    const bgY = bgTop + bgH / 2;
 
     const at = (u: number, v: number) => ({
-      x: baseX + (u - 0.5) * baseSize,
-      y: baseY + (v - 0.5) * baseSize,
+      x: bgX - bgW / 2 + u * bgW,
+      y: bgTop + v * bgH,
     });
 
-    const forest = at(0.52, 0.2);
+    const forest = at(0.52, 0.34);
     const lake = at(0.5, 0.52);
-    const task = at(0.47, 0.36);
-    const message = at(0.25, 0.49);
-    const farmPlot = at(0.73, 0.46);
-    const shop = at(0.74, 0.69);
+    const task = at(0.45, 0.43);
+    const message = at(0.24, 0.55);
+    const farmPlot = at(0.72, 0.45);
+    const shop = at(0.66, 0.66);
 
     return {
       centerX: w / 2,
       mapTop,
       mapBottom,
-      baseX,
-      baseY,
-      baseSize,
+      baseX: bgX,
+      baseY: bgTop + bgH * 0.57,
+      baseSize: bgW,
+      bgX,
+      bgY,
+      bgW,
+      bgH,
       forestX: forest.x,
       forestY: forest.y,
       lakeX: lake.x,
@@ -95,17 +102,18 @@ export class IslandScene extends Phaser.Scene {
   }
 
   private getResidentPosition(residentId: string, layout: IslandLayout): { x: number; y: number } | undefined {
+    const bgTop = layout.bgY - layout.bgH / 2;
     const at = (u: number, v: number) => ({
-      x: layout.baseX + (u - 0.5) * layout.baseSize,
-      y: layout.baseY + (v - 0.5) * layout.baseSize,
+      x: layout.bgX - layout.bgW / 2 + u * layout.bgW,
+      y: bgTop + v * layout.bgH,
     });
 
     const residentPositions: Record<string, { x: number; y: number }> = {
-      'foko-fox': at(0.38, 0.16),
-      'deer-lamp': at(0.69, 0.23),
-      'mist-cat': at(0.2, 0.47),
-      'slow-bear': at(0.18, 0.77),
-      'dango-rabbit': at(0.59, 0.78),
+      'foko-fox': at(0.35, 0.32),
+      'deer-lamp': at(0.67, 0.36),
+      'mist-cat': at(0.2, 0.54),
+      'slow-bear': at(0.18, 0.75),
+      'dango-rabbit': at(0.56, 0.75),
     };
 
     return residentPositions[residentId];
@@ -143,96 +151,38 @@ export class IslandScene extends Phaser.Scene {
     });
   }
 
-  private createSunnyWeather(w: number, h: number, config: any) {
-    // Warm sky gradient effect with stylized sun
-    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setDepth(-20);
-    const sun = this.add.circle(60, 60, 26, 0xffd36b).setDepth(-19).setStrokeStyle(4, 0xfff1c7, 0.9);
-    this.tweens.add({
-      targets: sun,
-      y: 70,
-      duration: 2000,
-      yoyo: true,
-      repeat: -1,
+  private createOceanSkyBackdrop(w: number, h: number) {
+    // Quiet fallback/side extension for desktop when the portrait art does not cover the full width.
+    const bands = [
+      { y: 0, height: h * 0.34, color: 0xdff6ff },
+      { y: h * 0.28, height: h * 0.34, color: 0xbfeeff },
+      { y: h * 0.55, height: h * 0.45, color: 0x9fe4ef },
+    ];
+
+    bands.forEach((band) => {
+      this.add.rectangle(w / 2, band.y + band.height / 2, w, band.height + 2, band.color).setDepth(-24);
     });
+  }
+
+  private createSunnyWeather(w: number, h: number, config: any) {
+    // The portrait baseland already contains the main sky; keep weather behind it only as side fill.
+    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.3).setDepth(-23);
   }
 
   private createWindyWeather(w: number, h: number, config: any) {
-    // Light sky with drifting clouds
-    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setDepth(-20);
-    for (let i = 0; i < 4; i++) {
-      const cloudX = 40 + i * 130;
-      const cloudY = 42 + (i % 2) * 36;
-      const cloud = this.add.ellipse(cloudX, cloudY, 116, 42, 0xffffff).setAlpha(0.42).setDepth(-19);
-      this.tweens.add({
-        targets: cloud,
-        x: cloudX + 80,
-        duration: 8000 + i * 2000,
-        yoyo: true,
-        repeat: -1,
-      });
-    }
+    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.3).setDepth(-23);
   }
 
   private createRainyWeather(w: number, h: number, config: any) {
-    // Gray sky with rain effect
-    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setDepth(-20);
-    // Rain drops animation (simple lines)
-    for (let i = 0; i < 8; i++) {
-      const rainX = 80 + (i % 4) * 120;
-      const rainY = 30 + Math.floor(i / 4) * 60;
-      const drop = this.add.rectangle(rainX, rainY, 2, 12, 0xbfe0ff).setAlpha(0.6).setDepth(-19);
-      this.tweens.add({
-        targets: drop,
-        y: rainY + 150,
-        duration: 1500 + i * 300,
-        repeat: -1,
-        ease: 'Linear.easeNone',
-      });
-    }
+    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.34).setDepth(-23);
   }
 
   private createMistyWeather(w: number, h: number, config: any) {
-    // Light sky with mist layer
-    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setDepth(-20);
-
-    // Semi-transparent white overlay for mist effect
-    const mist = this.add.rectangle(w / 2, 200, w, h - 100, 0xffffff, 0.1).setDepth(-18);
-    this.tweens.add({
-      targets: mist,
-      alpha: 0.16,
-      duration: 3000,
-      yoyo: true,
-      repeat: -1,
-    });
-
-    // soft drifting mist shape
-    const mistShape = this.add.ellipse(w / 2, 100, 260, 60, 0xffffff, 0.42).setDepth(-19);
-    this.tweens.add({
-      targets: mistShape,
-      y: 120,
-      alpha: 0.25,
-      duration: 2500,
-      yoyo: true,
-      repeat: -1,
-    });
+    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.3).setDepth(-23);
   }
 
   private createStarryNightWeather(w: number, h: number, config: any) {
-    // Dark sky with stars
-    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setDepth(-20);
-    // Scatter simple star points
-    for (let i = 0; i < 18; i++) {
-      const starX = 40 + (i % 6) * 70;
-      const starY = 30 + Math.floor(i / 6) * 40;
-      const star = this.add.circle(starX, starY, 3, 0xfff7c9).setAlpha(0.9).setDepth(-19);
-      this.tweens.add({
-        targets: star,
-        alpha: 0.3,
-        duration: 1000 + i * 150,
-        yoyo: true,
-        repeat: -1,
-      });
-    }
+    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.34).setDepth(-23);
   }
 
   private createFallbackBase(layout: IslandLayout) {
@@ -249,14 +199,14 @@ export class IslandScene extends Phaser.Scene {
   }
 
   private addLakeHotspot(layout: IslandLayout) {
-    const lakeHotspot = this.add.ellipse(layout.lakeX, layout.lakeY, layout.baseSize * 0.23, layout.baseSize * 0.12, 0xffffff, 0.001);
+    const lakeHotspot = this.add.ellipse(layout.lakeX, layout.lakeY, layout.baseSize * 0.22, layout.baseSize * 0.13, 0xffffff, 0.001);
     lakeHotspot
       .setInteractive({ useHandCursor: true })
       .on('pointerdown', () => emitIslandEvent('moxi-open-panel', 'lake'))
       .setDepth(70);
 
     const lakeLabel = this.add
-      .text(layout.lakeX, layout.lakeY + layout.baseSize * 0.012, '星光湖 ✨', {
+      .text(layout.lakeX, layout.lakeY + layout.baseSize * 0.03, '星光湖 ✨', {
         fontFamily: 'sans-serif',
         fontSize: '14px',
         color: '#2f6b6f',
@@ -285,12 +235,14 @@ export class IslandScene extends Phaser.Scene {
     // Initialize weather
     this.initWeather();
 
-    // Apply weather effects
+    this.createOceanSkyBackdrop(w, h);
+
+    // Apply weather effects behind the portrait art as a subtle side-fill tint.
     this.createWeatherEffects(w, h);
 
-    // The painted baseland owns terrain, lake, paths, trees, flowers, and cliff edges.
+    // The painted portrait baseland owns the full environment.
     if (this.textures.exists(BASELAND_TEXTURE_KEY)) {
-      this.add.image(layout.baseX, layout.baseY, BASELAND_TEXTURE_KEY).setOrigin(0.5).setDisplaySize(layout.baseSize, layout.baseSize).setDepth(-12);
+      this.add.image(layout.bgX, layout.bgY, BASELAND_TEXTURE_KEY).setOrigin(0.5).setDisplaySize(layout.bgW, layout.bgH).setDepth(-12);
     } else {
       this.createFallbackBase(layout);
     }
