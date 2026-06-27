@@ -11,7 +11,7 @@ export type VisualAsset = {
   status: 'usable' | 'blocked-checkerboard' | 'reference-only';
 };
 
-const assetVersion = 'cleaned-asset-refresh-20260626-02';
+const assetVersion = 'portrait-baseland-20260627-01';
 const generatedUrl = (fileName: string) =>
   `https://raw.githubusercontent.com/SisuMYJ/MOXI-Land/main/public/assets/generated/${fileName}?v=${assetVersion}`;
 
@@ -28,14 +28,14 @@ const usable = (asset: Omit<VisualAsset, 'status'>): VisualAsset => ({
 });
 
 export const visualAssets: Record<string, VisualAsset> = {
-  // Loaded from main for now because cleaned PNGs were uploaded there through the GitHub UI.
-  // The texture key is versioned to force Phaser/browser to reload the baseland after failed earlier loads.
+  // Portrait baseland owns the sky, ocean, island terrain, lake, paths, trees, flowers, and cliff edges.
+  // It is rendered with its natural portrait ratio in IslandScene, not squeezed into a square.
   'baseland': usable({
-    key: 'baseland-v2',
-    path: generatedUrl('baseland.png'),
+    key: 'baseland-portrait-v1',
+    path: generatedUrl('baseland-portrait.png'),
     scale: 1,
     origin: [0.5, 0.5],
-    footprint: { w: 520, h: 520 },
+    footprint: { w: 1440, h: 2520 },
     depthRule: 'manual',
   }),
 
@@ -55,10 +55,10 @@ export const visualAssets: Record<string, VisualAsset> = {
   'dango-rabbit': usable({ key: 'dango-rabbit', path: generatedUrl('dango-rabbit.png'), scale: 1, origin: [0.5, 1], footprint: { w: 50, h: 64 }, depthRule: 'y' }),
   'lumo': { key: 'lumo', path: generatedUrl('lumo.png'), scale: 1, origin: [0.5, 1], footprint: { w: 56, h: 65 }, depthRule: 'manual', status: 'reference-only' },
 
-  // These are cleaned, but the baseland already carries most scenery. Keep them available for later scene polish.
-  'cloud-01': usable({ key: 'cloud-01', path: generatedUrl('cloud-01.png'), scale: 1, origin: [0.5, 0.5], footprint: { w: 180, h: 126 }, depthRule: 'manual' }),
-  'cloud-02': usable({ key: 'cloud-02', path: generatedUrl('cloud-02.png'), scale: 1, origin: [0.5, 0.5], footprint: { w: 170, h: 124 }, depthRule: 'manual' }),
-  'tree-01': usable({ key: 'tree-01', path: generatedUrl('tree-01.png'), scale: 1, origin: [0.5, 1], footprint: { w: 70, h: 86 }, depthRule: 'y' }),
+  // These are cleaned, but the portrait baseland already carries most scenery. Keep them available for later scene polish.
+  'cloud-01': { key: 'cloud-01', path: generatedUrl('cloud-01.png'), scale: 1, origin: [0.5, 0.5], footprint: { w: 180, h: 126 }, depthRule: 'manual', status: 'reference-only' },
+  'cloud-02': { key: 'cloud-02', path: generatedUrl('cloud-02.png'), scale: 1, origin: [0.5, 0.5], footprint: { w: 170, h: 124 }, depthRule: 'manual', status: 'reference-only' },
+  'tree-01': { key: 'tree-01', path: generatedUrl('tree-01.png'), scale: 1, origin: [0.5, 1], footprint: { w: 70, h: 86 }, depthRule: 'y', status: 'reference-only' },
 
   'style-reference': { key: 'style-reference', path: generatedUrl('style-reference.png'), scale: 1.0, origin: [0.5, 0.5], status: 'reference-only' },
 };
