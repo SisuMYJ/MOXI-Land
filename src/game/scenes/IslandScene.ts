@@ -47,18 +47,18 @@ export class IslandScene extends Phaser.Scene {
   }
 
   private getLayout(w: number, h: number): IslandLayout {
-    // Keep the island away from UI overlays while letting the baseland art own the terrain.
-    const mapTop = 154;
-    const mapBottom = Math.max(640, h - 58);
-    const availableHeight = mapBottom - mapTop;
+    // Let the painted baseland dominate the first screen while keeping a compact/mobile cap.
     const isCompact = w < 700;
+    const mapTop = isCompact ? 124 : 126;
+    const mapBottom = Math.max(isCompact ? 650 : 680, h - (isCompact ? 24 : 28));
+    const availableHeight = mapBottom - mapTop;
     const baseSize = Phaser.Math.Clamp(
-      Math.min(w * (isCompact ? 1.18 : 0.78), availableHeight * 1.02),
-      isCompact ? 430 : 520,
-      isCompact ? 520 : 640
+      Math.min(w * (isCompact ? 1.34 : 0.92), availableHeight * (isCompact ? 1.06 : 1.12)),
+      isCompact ? 470 : 600,
+      isCompact ? 570 : 760
     );
     const baseX = w / 2;
-    const baseY = mapTop + baseSize * 0.54;
+    const baseY = mapTop + baseSize * (isCompact ? 0.515 : 0.5);
 
     const at = (u: number, v: number) => ({
       x: baseX + (u - 0.5) * baseSize,
