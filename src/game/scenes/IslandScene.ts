@@ -151,38 +151,66 @@ export class IslandScene extends Phaser.Scene {
     });
   }
 
-  private createOceanSkyBackdrop(w: number, h: number) {
-    // Quiet fallback/side extension for desktop when the portrait art does not cover the full width.
-    const bands = [
-      { y: 0, height: h * 0.34, color: 0xdff6ff },
-      { y: h * 0.28, height: h * 0.34, color: 0xbfeeff },
-      { y: h * 0.55, height: h * 0.45, color: 0x9fe4ef },
-    ];
+  private getCoverSize(w: number, h: number) {
+    const coverW = Math.max(w, h * BASELAND_ASPECT);
+    const coverH = coverW / BASELAND_ASPECT;
+    return { coverW, coverH };
+  }
 
-    bands.forEach((band) => {
-      this.add.rectangle(w / 2, band.y + band.height / 2, w, band.height + 2, band.color).setDepth(-24);
-    });
+  private createOceanSkyBackdrop(w: number, h: number) {
+    // Desktop side extension: use the same portrait art as a soft full-screen atmosphere layer.
+    // This avoids hard color panels and makes the extra left/right space feel like the artwork fades outward.
+    this.add.rectangle(w / 2, h / 2, w, h, 0xc9f2ff).setDepth(-26);
+
+    if (this.textures.exists(BASELAND_TEXTURE_KEY)) {
+      const { coverW, coverH } = this.getCoverSize(w, h);
+      const extension = this.add
+        .image(w / 2, h / 2, BASELAND_TEXTURE_KEY)
+        .setOrigin(0.5)
+        .setDisplaySize(coverW * 1.08, coverH * 1.08)
+        .setAlpha(0.72)
+        .setDepth(-25);
+
+      // A light veil keeps the side extension from competing with the crisp portrait layer.
+      this.add.rectangle(w / 2, h / 2, w, h, 0xe8fbff, 0.3).setDepth(-24);
+
+      // Soft side haze: horizontal fade at the outer edges, not top/bottom blocks.
+      const sideFade = this.add.graphics().setDepth(-23.5);
+      const sideWidth = Math.max(80, (w - Math.min(w, coverW * 0.58)) * 0.42);
+      for (let i = 0; i < 12; i++) {
+        const t = i / 11;
+        const alpha = 0.22 * (1 - t);
+        const stripW = sideWidth / 12;
+        sideFade.fillStyle(0xf5ffff, alpha);
+        sideFade.fillRect(i * stripW, 0, stripW + 1, h);
+        sideFade.fillRect(w - (i + 1) * stripW, 0, stripW + 1, h);
+      }
+
+      return extension;
+    }
+
+    return undefined;
   }
 
   private createSunnyWeather(w: number, h: number, config: any) {
     // The portrait baseland already contains the main sky; keep weather behind it only as side fill.
-    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.3).setDepth(-23);
+    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.18).setDepth(-23);
   }
 
   private createWindyWeather(w: number, h: number, config: any) {
-    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.3).setDepth(-23);
+    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.18).setDepth(-23);
   }
 
   private createRainyWeather(w: number, h: number, config: any) {
-    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.34).setDepth(-23);
+    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.22).setDepth(-23);
   }
 
   private createMistyWeather(w: number, h: number, config: any) {
-    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.3).setDepth(-23);
+    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.18).setDepth(-23);
   }
 
   private createStarryNightWeather(w: number, h: number, config: any) {
-    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.34).setDepth(-23);
+    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.22).setDepth(-23);
   }
 
   private createFallbackBase(layout: IslandLayout) {
