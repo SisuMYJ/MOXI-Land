@@ -52,15 +52,15 @@ export class IslandScene extends Phaser.Scene {
   }
 
   private getLayout(w: number, h: number): IslandLayout {
-    // Portrait baseland is a full sky/ocean/island scene. Desktop gets a centered portrait stage;
-    // mobile gets a wider crop so the island still feels substantial.
+    // Portrait baseland is the full sky/ocean/island scene. At 100% browser zoom,
+    // fit it to the viewport height so the user never needs to zoom out just to inspect it.
     const isCompact = w < 700;
     const mapTop = 0;
     const mapBottom = h;
-    const bgW = Phaser.Math.Clamp(w * (isCompact ? 1.1 : 0.72), isCompact ? 410 : 720, isCompact ? 540 : 860);
-    const bgH = bgW / BASELAND_ASPECT;
+    const bgH = Phaser.Math.Clamp(h * (isCompact ? 1.04 : 0.98), isCompact ? 760 : 780, isCompact ? 1080 : 980);
+    const bgW = bgH * BASELAND_ASPECT;
     const bgX = w / 2;
-    const bgTop = isCompact ? -70 : -170;
+    const bgTop = isCompact ? -22 : 0;
     const bgY = bgTop + bgH / 2;
 
     const at = (u: number, v: number) => ({
