@@ -57,10 +57,12 @@ export class IslandScene extends Phaser.Scene {
     const isCompact = w < 700;
     const mapTop = 0;
     const mapBottom = h;
-    const bgH = Phaser.Math.Clamp(h * (isCompact ? 1.04 : 0.98), isCompact ? 760 : 780, isCompact ? 1080 : 980);
+    const bgTop = isCompact ? -22 : 0;
+    // Always let the portrait art cover the full visible height. Previously the height cap could leave
+    // a blank strip at the bottom on phone-like screens or tall desktop windows.
+    const bgH = Math.max(h - bgTop, isCompact ? 760 : 780);
     const bgW = bgH * BASELAND_ASPECT;
     const bgX = w / 2;
-    const bgTop = isCompact ? -22 : 0;
     const bgY = bgTop + bgH / 2;
 
     const at = (u: number, v: number) => ({
@@ -158,78 +160,86 @@ export class IslandScene extends Phaser.Scene {
     return (r << 16) | (g << 8) | b;
   }
 
+  private getSideEdgeColor(yRatio: number): [number, number, number] {
+    // Approximate the portrait art's left/right edge colors: brighter sky at the top,
+    // stronger turquoise ocean in the middle/lower area, then soft misty blue near the bottom.
+    if (yRatio < 0.22) return [122, 199, 235];
+    if (yRatio < 0.42) return [92, 202, 232];
+    if (yRatio < 0.72) return [48, 189, 215];
+    return [105, 214, 226];
+  }
+
   private createOceanSkyBackdrop(w: number, h: number, layout: IslandLayout) {
     // Desktop side extension only. The centered portrait stage remains untouched.
     const outer: [number, number, number] = [255, 250, 235];
-    const edge: [number, number, number] = [196, 242, 247];
-    const mid: [number, number, number] = [225, 250, 250];
     const leftEdge = layout.bgX - layout.bgW / 2;
     const rightEdge = layout.bgX + layout.bgW / 2;
 
-    this.add.rectangle(w / 2, h / 2, w, h, this.mixColor(outer, mid, 0.35)).setDepth(-26);
+    this.add.rectangle(w / 2, h / 2, w, h, 0xfffaeb).setDepth(-26);
 
     const graphics = this.add.graphics().setDepth(-25);
-    const steps = 56;
+    const stepsX = 64;
+    const stepsY = 18;
 
-    if (leftEdge > 0) {
-      const stripW = leftEdge / steps;
-      for (let i = 0; i < steps; i++) {
-        const t = (i + 1) / steps;
-        const color = this.mixColor(outer, edge, t);
-        graphics.fillStyle(color, 1);
-        graphics.fillRect(i * stripW, 0, stripW + 1, h);
+    const drawSideGradient = (x0: number, sideW: number, reverse: boolean) => {
+      if (sideW <= 0) return;
+      const stripW = sideW / stepsX;
+      const stripH = h / stepsY;
+      for (let ix = 0; ix < stepsX; ix++) {
+        // At the portrait edge, start from a stronger edge color. Fade outward to the page color.
+        const edgeAmount = reverse ? 1 - ix / (stepsX - 1) : (ix + 1) / stepsX;
+        const eased = Math.pow(Phaser.Math.Clamp(edgeAmount, 0, 1), 0.72);
+        for (let iy = 0; iy < stepsY; iy++) {
+          const yRatio = (iy + 0.5) / stepsY;
+          const edgeColor = this.getSideEdgeColor(yRatio);
+          const color = this.mixColor(outer, edgeColor, eased);
+          graphics.fillStyle(color, 1);
+          graphics.fillRect(x0 + ix * stripW, iy * stripH, stripW + 1, stripH + 1);
+        }
       }
-    }
+    };
 
-    if (rightEdge < w) {
-      const sideW = w - rightEdge;
-      const stripW = sideW / steps;
-      for (let i = 0; i < steps; i++) {
-        const t = 1 - i / steps;
-        const color = this.mixColor(outer, edge, t);
-        graphics.fillStyle(color, 1);
-        graphics.fillRect(rightEdge + i * stripW, 0, stripW + 1, h);
-      }
-    }
+    drawSideGradient(0, leftEdge, false);
+    drawSideGradient(rightEdge, w - rightEdge, true);
 
-    // A tiny side glow softens the seam without covering the mobile portrait itself.
+    // A tiny side haze softens only the seam; keep it subtle so the edge color is not washed out.
     const seam = this.add.graphics().setDepth(-13);
-    const seamW = Math.min(44, Math.max(18, layout.bgW * 0.06));
+    const seamW = Math.min(34, Math.max(14, layout.bgW * 0.045));
     if (leftEdge > 0) {
-      for (let i = 0; i < 10; i++) {
-        const alpha = 0.045 * (1 - i / 9);
+      for (let i = 0; i < 8; i++) {
+        const alpha = 0.025 * (1 - i / 7);
         seam.fillStyle(0xf7ffff, alpha);
-        seam.fillRect(leftEdge - seamW + (i * seamW) / 10, 0, seamW / 10 + 1, h);
+        seam.fillRect(leftEdge - seamW + (i * seamW) / 8, 0, seamW / 8 + 1, h);
       }
     }
     if (rightEdge < w) {
-      for (let i = 0; i < 10; i++) {
-        const alpha = 0.045 * (1 - i / 9);
+      for (let i = 0; i < 8; i++) {
+        const alpha = 0.025 * (1 - i / 7);
         seam.fillStyle(0xf7ffff, alpha);
-        seam.fillRect(rightEdge + (i * seamW) / 10, 0, seamW / 10 + 1, h);
+        seam.fillRect(rightEdge + (i * seamW) / 8, 0, seamW / 8 + 1, h);
       }
     }
   }
 
   private createSunnyWeather(w: number, h: number, config: any) {
     // The portrait baseland already contains the main sky; keep weather behind it only as side fill.
-    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.12).setDepth(-23);
+    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.08).setDepth(-23);
   }
 
   private createWindyWeather(w: number, h: number, config: any) {
-    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.12).setDepth(-23);
+    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.08).setDepth(-23);
   }
 
   private createRainyWeather(w: number, h: number, config: any) {
-    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.16).setDepth(-23);
-  }
-
-  private createMistyWeather(w: number, h: number, config: any) {
     this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.12).setDepth(-23);
   }
 
+  private createMistyWeather(w: number, h: number, config: any) {
+    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.08).setDepth(-23);
+  }
+
   private createStarryNightWeather(w: number, h: number, config: any) {
-    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.16).setDepth(-23);
+    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.12).setDepth(-23);
   }
 
   private createFallbackBase(layout: IslandLayout) {
