@@ -52,8 +52,8 @@ export class IslandScene extends Phaser.Scene {
   }
 
   private getLayout(w: number, h: number): IslandLayout {
-    // Portrait baseland is the full sky/ocean/island scene. At 100% browser zoom,
-    // fit it to the viewport height so the user never needs to zoom out just to inspect it.
+    // The portrait baseland is treated as the original mobile screen.
+    // Desktop only gains extra side space; the portrait stage itself remains centered and stable.
     const isCompact = w < 700;
     const mapTop = 0;
     const mapBottom = h;
@@ -151,66 +151,85 @@ export class IslandScene extends Phaser.Scene {
     });
   }
 
-  private getCoverSize(w: number, h: number) {
-    const coverW = Math.max(w, h * BASELAND_ASPECT);
-    const coverH = coverW / BASELAND_ASPECT;
-    return { coverW, coverH };
+  private mixColor(from: [number, number, number], to: [number, number, number], t: number) {
+    const r = Math.round(from[0] + (to[0] - from[0]) * t);
+    const g = Math.round(from[1] + (to[1] - from[1]) * t);
+    const b = Math.round(from[2] + (to[2] - from[2]) * t);
+    return (r << 16) | (g << 8) | b;
   }
 
-  private createOceanSkyBackdrop(w: number, h: number) {
-    // Desktop side extension: use the same portrait art as a soft full-screen atmosphere layer.
-    // This avoids hard color panels and makes the extra left/right space feel like the artwork fades outward.
-    this.add.rectangle(w / 2, h / 2, w, h, 0xc9f2ff).setDepth(-26);
+  private createOceanSkyBackdrop(w: number, h: number, layout: IslandLayout) {
+    // Desktop side extension only. The centered portrait stage remains untouched.
+    const outer: [number, number, number] = [255, 250, 235];
+    const edge: [number, number, number] = [196, 242, 247];
+    const mid: [number, number, number] = [225, 250, 250];
+    const leftEdge = layout.bgX - layout.bgW / 2;
+    const rightEdge = layout.bgX + layout.bgW / 2;
 
-    if (this.textures.exists(BASELAND_TEXTURE_KEY)) {
-      const { coverW, coverH } = this.getCoverSize(w, h);
-      const extension = this.add
-        .image(w / 2, h / 2, BASELAND_TEXTURE_KEY)
-        .setOrigin(0.5)
-        .setDisplaySize(coverW * 1.08, coverH * 1.08)
-        .setAlpha(0.72)
-        .setDepth(-25);
+    this.add.rectangle(w / 2, h / 2, w, h, this.mixColor(outer, mid, 0.35)).setDepth(-26);
 
-      // A light veil keeps the side extension from competing with the crisp portrait layer.
-      this.add.rectangle(w / 2, h / 2, w, h, 0xe8fbff, 0.3).setDepth(-24);
+    const graphics = this.add.graphics().setDepth(-25);
+    const steps = 56;
 
-      // Soft side haze: horizontal fade at the outer edges, not top/bottom blocks.
-      const sideFade = this.add.graphics().setDepth(-23.5);
-      const sideWidth = Math.max(80, (w - Math.min(w, coverW * 0.58)) * 0.42);
-      for (let i = 0; i < 12; i++) {
-        const t = i / 11;
-        const alpha = 0.22 * (1 - t);
-        const stripW = sideWidth / 12;
-        sideFade.fillStyle(0xf5ffff, alpha);
-        sideFade.fillRect(i * stripW, 0, stripW + 1, h);
-        sideFade.fillRect(w - (i + 1) * stripW, 0, stripW + 1, h);
+    if (leftEdge > 0) {
+      const stripW = leftEdge / steps;
+      for (let i = 0; i < steps; i++) {
+        const t = (i + 1) / steps;
+        const color = this.mixColor(outer, edge, t);
+        graphics.fillStyle(color, 1);
+        graphics.fillRect(i * stripW, 0, stripW + 1, h);
       }
-
-      return extension;
     }
 
-    return undefined;
+    if (rightEdge < w) {
+      const sideW = w - rightEdge;
+      const stripW = sideW / steps;
+      for (let i = 0; i < steps; i++) {
+        const t = 1 - i / steps;
+        const color = this.mixColor(outer, edge, t);
+        graphics.fillStyle(color, 1);
+        graphics.fillRect(rightEdge + i * stripW, 0, stripW + 1, h);
+      }
+    }
+
+    // A tiny side glow softens the seam without covering the mobile portrait itself.
+    const seam = this.add.graphics().setDepth(-13);
+    const seamW = Math.min(44, Math.max(18, layout.bgW * 0.06));
+    if (leftEdge > 0) {
+      for (let i = 0; i < 10; i++) {
+        const alpha = 0.045 * (1 - i / 9);
+        seam.fillStyle(0xf7ffff, alpha);
+        seam.fillRect(leftEdge - seamW + (i * seamW) / 10, 0, seamW / 10 + 1, h);
+      }
+    }
+    if (rightEdge < w) {
+      for (let i = 0; i < 10; i++) {
+        const alpha = 0.045 * (1 - i / 9);
+        seam.fillStyle(0xf7ffff, alpha);
+        seam.fillRect(rightEdge + (i * seamW) / 10, 0, seamW / 10 + 1, h);
+      }
+    }
   }
 
   private createSunnyWeather(w: number, h: number, config: any) {
     // The portrait baseland already contains the main sky; keep weather behind it only as side fill.
-    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.18).setDepth(-23);
+    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.12).setDepth(-23);
   }
 
   private createWindyWeather(w: number, h: number, config: any) {
-    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.18).setDepth(-23);
+    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.12).setDepth(-23);
   }
 
   private createRainyWeather(w: number, h: number, config: any) {
-    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.22).setDepth(-23);
+    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.16).setDepth(-23);
   }
 
   private createMistyWeather(w: number, h: number, config: any) {
-    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.18).setDepth(-23);
+    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.12).setDepth(-23);
   }
 
   private createStarryNightWeather(w: number, h: number, config: any) {
-    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.22).setDepth(-23);
+    this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setAlpha(0.16).setDepth(-23);
   }
 
   private createFallbackBase(layout: IslandLayout) {
@@ -263,12 +282,12 @@ export class IslandScene extends Phaser.Scene {
     // Initialize weather
     this.initWeather();
 
-    this.createOceanSkyBackdrop(w, h);
+    this.createOceanSkyBackdrop(w, h, layout);
 
     // Apply weather effects behind the portrait art as a subtle side-fill tint.
     this.createWeatherEffects(w, h);
 
-    // The painted portrait baseland owns the full environment.
+    // The painted portrait baseland owns the full mobile scene.
     if (this.textures.exists(BASELAND_TEXTURE_KEY)) {
       this.add.image(layout.bgX, layout.bgY, BASELAND_TEXTURE_KEY).setOrigin(0.5).setDisplaySize(layout.bgW, layout.bgH).setDepth(-12);
     } else {
