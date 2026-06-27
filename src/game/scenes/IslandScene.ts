@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { weatherConfigs } from '../../content/weather';
 import { residents } from '../../content/residents';
+import type { Resident } from '../../types/game';
 import { assetList } from '../../content/visualAssets';
 import { BuildingSprite } from '../objects/BuildingSprite';
 import { FarmPlotSprite } from '../objects/FarmPlotSprite';
@@ -49,9 +50,15 @@ export class IslandScene extends Phaser.Scene {
     // Keep the island away from UI overlays while letting the baseland art own the terrain.
     const mapTop = 154;
     const mapBottom = Math.max(640, h - 58);
-    const baseSize = Phaser.Math.Clamp(Math.min(w * 0.96, (mapBottom - mapTop) * 0.95), 430, 560);
+    const availableHeight = mapBottom - mapTop;
+    const isCompact = w < 700;
+    const baseSize = Phaser.Math.Clamp(
+      Math.min(w * (isCompact ? 1.18 : 0.78), availableHeight * 1.02),
+      isCompact ? 430 : 520,
+      isCompact ? 520 : 640
+    );
     const baseX = w / 2;
-    const baseY = mapTop + baseSize * 0.55;
+    const baseY = mapTop + baseSize * 0.54;
 
     const at = (u: number, v: number) => ({
       x: baseX + (u - 0.5) * baseSize,
@@ -85,6 +92,23 @@ export class IslandScene extends Phaser.Scene {
       shopX: shop.x,
       shopY: shop.y,
     };
+  }
+
+  private getResidentPosition(residentId: string, layout: IslandLayout): { x: number; y: number } | undefined {
+    const at = (u: number, v: number) => ({
+      x: layout.baseX + (u - 0.5) * layout.baseSize,
+      y: layout.baseY + (v - 0.5) * layout.baseSize,
+    });
+
+    const residentPositions: Record<string, { x: number; y: number }> = {
+      'foko-fox': at(0.38, 0.16),
+      'deer-lamp': at(0.69, 0.23),
+      'mist-cat': at(0.2, 0.47),
+      'slow-bear': at(0.18, 0.77),
+      'dango-rabbit': at(0.59, 0.78),
+    };
+
+    return residentPositions[residentId];
   }
 
   private createWeatherEffects(w: number, h: number) {
@@ -280,6 +304,14 @@ export class IslandScene extends Phaser.Scene {
     new FarmPlotSprite(this, layout.farmPlotX, layout.farmPlotY, 'farm-plot', () => emitIslandEvent('moxi-open-panel', 'farm'));
     new BuildingSprite(this, layout.shopX, layout.shopY, '千灯铺', 0xffc9de, () => emitIslandEvent('moxi-open-panel', 'shop'), 'lantern-shop');
 
-    residents.filter((resident) => resident.isOutsideToday).forEach((resident) => new ResidentSprite(this, resident, () => emitIslandEvent('moxi-open-resident', resident.id)));
+    residents
+      .filter((resident) => resident.isOutsideToday)
+      .forEach((resident) => {
+        const positionedResident: Resident = {
+          ...resident,
+          position: this.getResidentPosition(resident.id, layout) ?? resident.position,
+        };
+        new ResidentSprite(this, positionedResident, () => emitIslandEvent('moxi-open-resident', resident.id));
+      });
   }
 }
