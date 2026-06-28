@@ -69,13 +69,13 @@ export class IslandScene extends Phaser.Scene {
       y: bgTop + v * bgH,
     });
 
-    const forest = at(0.52, 0.34);
+    const forest = at(0.52, 0.32);
     const lake = at(0.5, 0.52);
-    const task = at(0.45, 0.43);
-    const message = at(0.24, 0.55);
-    const farmPlot = at(0.72, 0.45);
-    const shop = at(0.66, 0.66);
-    const animalGarden = at(0.29, 0.41);
+    const task = at(0.48, 0.39);
+    const message = at(0.22, 0.56);
+    const farmPlot = at(0.75, 0.43);
+    const shop = at(0.64, 0.66);
+    const animalGarden = at(0.30, 0.40);
 
     return {
       centerX: w / 2,
@@ -113,11 +113,11 @@ export class IslandScene extends Phaser.Scene {
     });
 
     const residentPositions: Record<string, { x: number; y: number }> = {
-      'foko-fox': at(0.35, 0.32),
-      'deer-lamp': at(0.67, 0.36),
-      'mist-cat': at(0.2, 0.54),
-      'slow-bear': at(0.18, 0.75),
-      'dango-rabbit': at(0.56, 0.75),
+      'foko-fox': at(0.35, 0.28),
+      'deer-lamp': at(0.68, 0.32),
+      'mist-cat': at(0.18, 0.51),
+      'slow-bear': at(0.22, 0.69),
+      'dango-rabbit': at(0.51, 0.71),
     };
 
     return residentPositions[residentId];
