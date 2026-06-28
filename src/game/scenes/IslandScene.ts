@@ -71,13 +71,14 @@ export class IslandScene extends Phaser.Scene {
 
     const forest = at(0.52, 0.32);
     const lake = at(0.5, 0.52);
-    // Animal Garden sits where its entrance path naturally connects to the painted island path.
-    const animalGarden = at(0.29, 0.41);
-    // Push the task cottage slightly right/up so the Animal Garden entrance and label can breathe.
-    const task = at(0.515, 0.385);
-    const message = at(0.19, 0.57);
-    const farmPlot = at(0.765, 0.435);
-    const shop = at(0.645, 0.665);
+
+    // Place map objects by their front/door side, not by visual center.
+    // Their origin is bottom-center, so each point below is the spot where the building's front path touches the island path.
+    const animalGarden = at(0.285, 0.415); // entrance stones meet the upper-left ring road
+    const task = at(0.515, 0.415); // front steps land on the upper lake path, with the back tucked into trees
+    const message = at(0.205, 0.545); // board feet sit on the left path bend, not on the cliff edge
+    const farmPlot = at(0.755, 0.455); // farm fence/front edge follows the right-side path pad
+    const shop = at(0.655, 0.685); // shop door faces the lower-right path plaza
 
     return {
       centerX: w / 2,
@@ -116,13 +117,13 @@ export class IslandScene extends Phaser.Scene {
 
     // Safe island-only spots. Residents are daily visitors, not fixed landmarks.
     return [
-      at(0.36, 0.29), // upper-left tree path
-      at(0.67, 0.32), // farm-side path
-      at(0.20, 0.54), // message-board path
-      at(0.73, 0.57), // right-side path bend
-      at(0.24, 0.67), // lower-left steps on land
+      at(0.36, 0.30), // upper-left tree path
+      at(0.67, 0.34), // farm-side path
+      at(0.22, 0.54), // message-board path
+      at(0.74, 0.57), // right-side path bend
+      at(0.25, 0.67), // lower-left steps on land
       at(0.50, 0.71), // lower central path
-      at(0.60, 0.66), // lantern-shop front path
+      at(0.61, 0.66), // lantern-shop front path
     ];
   }
 
