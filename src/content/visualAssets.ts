@@ -39,10 +39,10 @@ export const visualAssets: Record<string, VisualAsset> = {
     depthRule: 'manual',
   }),
 
-  'task-cottage': usable({ key: 'task-cottage', path: generatedUrl('task-cottage.png'), scale: 1, origin: [0.42, 1], labelOffset: [10, 18], footprint: { w: 112, h: 111 }, depthRule: 'y' }),
+  'task-cottage': usable({ key: 'task-cottage', path: generatedUrl('task-cottage.png'), scale: 1, origin: [0.3, 1], labelOffset: [24, 18], footprint: { w: 112, h: 111 }, depthRule: 'y' }),
   'message-board': usable({ key: 'message-board', path: generatedUrl('message-board.png'), scale: 1, origin: [0.5, 1], labelOffset: [0, 16], footprint: { w: 105, h: 110 }, depthRule: 'y' }),
   'farm-plot': usable({ key: 'farm-plot', path: generatedUrl('farm-plot.png'), scale: 1, origin: [0.5, 1], labelOffset: [0, 16], footprint: { w: 136, h: 101 }, depthRule: 'y' }),
-  'lantern-shop': usable({ key: 'lantern-shop', path: generatedUrl('lantern-shop.png'), scale: 1, origin: [0.5, 1.12], labelOffset: [0, 0], footprint: { w: 118, h: 131 }, depthRule: 'y' }),
+  'lantern-shop': usable({ key: 'lantern-shop', path: generatedUrl('lantern-shop.png'), scale: 1, origin: [0.5, 1.18], labelOffset: [0, -6], footprint: { w: 118, h: 131 }, depthRule: 'y' }),
   'animal-garden': usable({ key: 'animal-garden', path: generatedUrl('animal-garden.png'), scale: 1, origin: [0.44, 1], labelOffset: [9, 14], footprint: { w: 150, h: 134 }, depthRule: 'y' }),
   'forest-gate': usable({ key: 'forest-gate', path: generatedUrl('forest-gate.png'), scale: 1, origin: [0.5, 1], labelOffset: [0, 0], footprint: { w: 150, h: 143 }, depthRule: 'manual' }),
 
