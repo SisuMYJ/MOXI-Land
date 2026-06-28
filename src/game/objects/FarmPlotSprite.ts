@@ -48,9 +48,10 @@ export class FarmPlotSprite extends Phaser.GameObjects.Container {
 			}
 		}
 
-		if (onClick) {
-			this.setInteractive({ useHandCursor: true }).on('pointerdown', onClick);
-		}
+		this.setInteractive({ useHandCursor: true })
+			.on('pointerdown', () => onClick?.())
+			.on('pointerover', () => scene.tweens.add({ targets: this, scale: 1.05, duration: 120 }))
+			.on('pointerout', () => scene.tweens.add({ targets: this, scale: 1, duration: 120 }));
 
 		scene.add.existing(this);
 		this.setDepth(this.y);
