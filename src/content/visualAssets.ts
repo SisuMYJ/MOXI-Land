@@ -50,11 +50,11 @@ export const visualAssets: Record<string, VisualAsset> = {
   'starlight-lake': { key: 'starlight-lake', path: generatedUrl('starlight-lake.png'), scale: 1, origin: [0.5, 0.5], labelOffset: [0, 50], footprint: { w: 220, h: 120 }, depthRule: 'manual', status: 'reference-only' },
 
   // Residents are deliberately smaller than buildings. They should feel like visitors walking around, not map landmarks.
-  'mist-cat': usable({ key: 'mist-cat', path: generatedUrl('mist-cat.png'), scale: 1, origin: [0.5, 1], footprint: { w: 42, h: 50 }, depthRule: 'y' }),
-  'foko-fox': usable({ key: 'foko-fox', path: generatedUrl('foko-fox.png'), scale: 1, origin: [0.5, 1], footprint: { w: 42, h: 49 }, depthRule: 'y' }),
-  'deer-lamp': usable({ key: 'deer-lamp', path: generatedUrl('deer-lamp.png'), scale: 1, origin: [0.5, 1], footprint: { w: 40, h: 52 }, depthRule: 'y' }),
-  'slow-bear': usable({ key: 'slow-bear', path: generatedUrl('slow-bear.png'), scale: 1, origin: [0.5, 1], footprint: { w: 43, h: 50 }, depthRule: 'y' }),
-  'dango-rabbit': usable({ key: 'dango-rabbit', path: generatedUrl('dango-rabbit.png'), scale: 1, origin: [0.5, 1], footprint: { w: 41, h: 52 }, depthRule: 'y' }),
+  'mist-cat': usable({ key: 'mist-cat', path: generatedUrl('mist-cat.png'), scale: 1, origin: [0.5, 1], footprint: { w: 36, h: 44 }, depthRule: 'y' }),
+  'foko-fox': usable({ key: 'foko-fox', path: generatedUrl('foko-fox.png'), scale: 1, origin: [0.5, 1], footprint: { w: 36, h: 43 }, depthRule: 'y' }),
+  'deer-lamp': usable({ key: 'deer-lamp', path: generatedUrl('deer-lamp.png'), scale: 1, origin: [0.5, 1], footprint: { w: 34, h: 45 }, depthRule: 'y' }),
+  'slow-bear': usable({ key: 'slow-bear', path: generatedUrl('slow-bear.png'), scale: 1, origin: [0.5, 1], footprint: { w: 37, h: 44 }, depthRule: 'y' }),
+  'dango-rabbit': usable({ key: 'dango-rabbit', path: generatedUrl('dango-rabbit.png'), scale: 1, origin: [0.5, 1], footprint: { w: 35, h: 45 }, depthRule: 'y' }),
   'lumo': { key: 'lumo', path: generatedUrl('lumo.png'), scale: 1, origin: [0.5, 1], footprint: { w: 56, h: 65 }, depthRule: 'manual', status: 'reference-only' },
 
   // These are cleaned, but the portrait baseland already carries most scenery. Keep them available for later scene polish.
