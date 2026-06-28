@@ -10,6 +10,7 @@ import { emitIslandEvent } from '../systems/interactionSystem';
 
 const BASELAND_TEXTURE_KEY = 'baseland-portrait-v1';
 const BASELAND_ASPECT = 1440 / 2520;
+const MAX_OUTDOOR_RESIDENTS = 3;
 
 type IslandLayout = {
   centerX: number;
@@ -115,16 +116,36 @@ export class IslandScene extends Phaser.Scene {
       y: bgTop + v * layout.bgH,
     });
 
-    // Safe island-only spots. Residents are daily visitors, not fixed landmarks.
+    // Curated island-only spots: path edges, grass pockets, and door-front clearings.
+    // Avoid the lake, cliff water, crop rows, house roofs, and large building footprints.
     return [
-      at(0.36, 0.30), // upper-left tree path
-      at(0.66, 0.34), // farm-side path
-      at(0.22, 0.54), // message-board path
-      at(0.75, 0.59), // right-side path bend
-      at(0.25, 0.67), // lower-left steps on land
-      at(0.50, 0.71), // lower central path
-      at(0.58, 0.66), // lantern-shop front path
+      at(0.58, 0.385), // upper middle path between forest and farm
+      at(0.70, 0.515), // farm-to-cottage path corner
+      at(0.32, 0.545), // Animal Garden entrance stones
+      at(0.27, 0.645), // message-board side path
+      at(0.50, 0.685), // central lower crossroads
+      at(0.66, 0.675), // lantern-shop / task-cottage lower bend
+      at(0.35, 0.745), // lower-left meadow edge, safely on island
     ];
+  }
+
+  private getDailyOutdoorResidentIds() {
+    const ids = (window as any).__MOXI_OUTSIDE_RESIDENT_IDS__;
+    if (!Array.isArray(ids)) return undefined;
+
+    const validIds = ids.filter((id): id is string => typeof id === 'string' && residents.some((resident) => resident.id === id));
+    return validIds.slice(0, Math.max(1, Math.min(MAX_OUTDOOR_RESIDENTS, residents.length - 1)));
+  }
+
+  private getOutdoorResidents() {
+    const dailyOutdoorIds = this.getDailyOutdoorResidentIds();
+    if (dailyOutdoorIds?.length) {
+      return dailyOutdoorIds
+        .map((id) => residents.find((resident) => resident.id === id))
+        .filter((resident): resident is Resident => Boolean(resident));
+    }
+
+    return residents.filter((resident) => resident.isOutsideToday).slice(0, MAX_OUTDOOR_RESIDENTS);
   }
 
   private getRandomResidentPositions(layout: IslandLayout, outdoorResidents: Resident[]) {
@@ -273,7 +294,7 @@ export class IslandScene extends Phaser.Scene {
     new FarmPlotSprite(this, layout.farmPlotX, layout.farmPlotY, 'farm-plot', () => emitIslandEvent('moxi-open-panel', 'farm'));
     new BuildingSprite(this, layout.shopX, layout.shopY, '千灯铺', 0xffc9de, () => emitIslandEvent('moxi-open-panel', 'shop'), 'lantern-shop');
 
-    const outdoorResidents = residents.filter((resident) => resident.isOutsideToday);
+    const outdoorResidents = this.getOutdoorResidents();
     const residentPositions = this.getRandomResidentPositions(layout, outdoorResidents);
 
     outdoorResidents.forEach((resident) => {
