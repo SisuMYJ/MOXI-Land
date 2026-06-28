@@ -25,7 +25,7 @@ export type Resident = { id: string; name: string; species: string; personality:
 export type ExplorationStory = { id: string; zone: 'forest' | 'lake'; title: string; totalDays: number; currentDay: number; dailyCost: { currency: Currency; amount: number }; status: 'not_started' | 'active' | 'completed' | 'failed'; storyLines: string[]; rewardIds: string[]; lastAdvancedDate?: string };
 export type DailyState = { date: string; weather: string; outsideResidentIds: string[]; shopItemIds: string[]; lumoLineId: string };
 export type AIPromptContext = { resident?: Resident; weather: string; islandEvents: string[]; playerRecentTasks: Task[]; friendship?: number };
-export type Panel = 'tasks' | 'shop' | 'farm' | 'messages' | 'resident' | 'forest' | 'lake' | 'island' | null;
+export type Panel = 'tasks' | 'shop' | 'farm' | 'messages' | 'resident' | 'animalGarden' | 'forest' | 'lake' | 'island' | null;
 
 export type InventoryItem = {
 	id: string;
