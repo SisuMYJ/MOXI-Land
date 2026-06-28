@@ -43,17 +43,18 @@ export const visualAssets: Record<string, VisualAsset> = {
   'message-board': usable({ key: 'message-board', path: generatedUrl('message-board.png'), scale: 1, origin: [0.5, 1], labelOffset: [0, 16], footprint: { w: 105, h: 110 }, depthRule: 'y' }),
   'farm-plot': usable({ key: 'farm-plot', path: generatedUrl('farm-plot.png'), scale: 1, origin: [0.5, 1], labelOffset: [0, 16], footprint: { w: 136, h: 101 }, depthRule: 'y' }),
   'lantern-shop': usable({ key: 'lantern-shop', path: generatedUrl('lantern-shop.png'), scale: 1, origin: [0.5, 1], labelOffset: [0, 16], footprint: { w: 118, h: 131 }, depthRule: 'y' }),
-  'animal-garden': usable({ key: 'animal-garden', path: generatedUrl('animal-garden.png'), scale: 1, origin: [0.5, 1], labelOffset: [0, 12], footprint: { w: 106, h: 94 }, depthRule: 'y' }),
+  'animal-garden': usable({ key: 'animal-garden', path: generatedUrl('animal-garden.png'), scale: 1, origin: [0.5, 1], labelOffset: [0, 14], footprint: { w: 126, h: 112 }, depthRule: 'y' }),
   'forest-gate': usable({ key: 'forest-gate', path: generatedUrl('forest-gate.png'), scale: 1, origin: [0.5, 1], labelOffset: [0, 0], footprint: { w: 150, h: 143 }, depthRule: 'manual' }),
 
   // Keep the standalone lake for future panels/details, not for the main island map.
   'starlight-lake': { key: 'starlight-lake', path: generatedUrl('starlight-lake.png'), scale: 1, origin: [0.5, 0.5], labelOffset: [0, 50], footprint: { w: 220, h: 120 }, depthRule: 'manual', status: 'reference-only' },
 
-  'mist-cat': usable({ key: 'mist-cat', path: generatedUrl('mist-cat.png'), scale: 1, origin: [0.5, 1], footprint: { w: 54, h: 62 }, depthRule: 'y' }),
-  'foko-fox': usable({ key: 'foko-fox', path: generatedUrl('foko-fox.png'), scale: 1, origin: [0.5, 1], footprint: { w: 54, h: 61 }, depthRule: 'y' }),
-  'deer-lamp': usable({ key: 'deer-lamp', path: generatedUrl('deer-lamp.png'), scale: 1, origin: [0.5, 1], footprint: { w: 48, h: 64 }, depthRule: 'y' }),
-  'slow-bear': usable({ key: 'slow-bear', path: generatedUrl('slow-bear.png'), scale: 1, origin: [0.5, 1], footprint: { w: 54, h: 63 }, depthRule: 'y' }),
-  'dango-rabbit': usable({ key: 'dango-rabbit', path: generatedUrl('dango-rabbit.png'), scale: 1, origin: [0.5, 1], footprint: { w: 50, h: 64 }, depthRule: 'y' }),
+  // Residents are deliberately smaller than buildings. They should feel like visitors walking around, not map landmarks.
+  'mist-cat': usable({ key: 'mist-cat', path: generatedUrl('mist-cat.png'), scale: 1, origin: [0.5, 1], footprint: { w: 42, h: 50 }, depthRule: 'y' }),
+  'foko-fox': usable({ key: 'foko-fox', path: generatedUrl('foko-fox.png'), scale: 1, origin: [0.5, 1], footprint: { w: 42, h: 49 }, depthRule: 'y' }),
+  'deer-lamp': usable({ key: 'deer-lamp', path: generatedUrl('deer-lamp.png'), scale: 1, origin: [0.5, 1], footprint: { w: 40, h: 52 }, depthRule: 'y' }),
+  'slow-bear': usable({ key: 'slow-bear', path: generatedUrl('slow-bear.png'), scale: 1, origin: [0.5, 1], footprint: { w: 43, h: 50 }, depthRule: 'y' }),
+  'dango-rabbit': usable({ key: 'dango-rabbit', path: generatedUrl('dango-rabbit.png'), scale: 1, origin: [0.5, 1], footprint: { w: 41, h: 52 }, depthRule: 'y' }),
   'lumo': { key: 'lumo', path: generatedUrl('lumo.png'), scale: 1, origin: [0.5, 1], footprint: { w: 56, h: 65 }, depthRule: 'manual', status: 'reference-only' },
 
   // These are cleaned, but the portrait baseland already carries most scenery. Keep them available for later scene polish.
