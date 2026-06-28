@@ -11,7 +11,7 @@ export type VisualAsset = {
   status: 'usable' | 'blocked-checkerboard' | 'reference-only';
 };
 
-const assetVersion = 'portrait-baseland-animal-garden-20260627-02';
+const assetVersion = 'portrait-baseland-animal-garden-20260627-03';
 const generatedUrl = (fileName: string) =>
   `https://raw.githubusercontent.com/SisuMYJ/MOXI-Land/main/public/assets/generated/${fileName}?v=${assetVersion}`;
 
@@ -43,7 +43,7 @@ export const visualAssets: Record<string, VisualAsset> = {
   'message-board': usable({ key: 'message-board', path: generatedUrl('message-board.png'), scale: 1, origin: [0.5, 1], labelOffset: [0, 16], footprint: { w: 105, h: 110 }, depthRule: 'y' }),
   'farm-plot': usable({ key: 'farm-plot', path: generatedUrl('farm-plot.png'), scale: 1, origin: [0.5, 1], labelOffset: [0, 16], footprint: { w: 136, h: 101 }, depthRule: 'y' }),
   'lantern-shop': usable({ key: 'lantern-shop', path: generatedUrl('lantern-shop.png'), scale: 1, origin: [0.5, 1], labelOffset: [0, 16], footprint: { w: 118, h: 131 }, depthRule: 'y' }),
-  'animal-garden': usable({ key: 'animal-garden', path: generatedUrl('animal%20garden.png'), scale: 1, origin: [0.5, 1], labelOffset: [0, 14], footprint: { w: 126, h: 112 }, depthRule: 'y' }),
+  'animal-garden': usable({ key: 'animal-garden', path: generatedUrl('animal-garden.png'), scale: 1, origin: [0.5, 1], labelOffset: [0, 14], footprint: { w: 126, h: 112 }, depthRule: 'y' }),
   'forest-gate': usable({ key: 'forest-gate', path: generatedUrl('forest-gate.png'), scale: 1, origin: [0.5, 1], labelOffset: [0, 0], footprint: { w: 150, h: 143 }, depthRule: 'manual' }),
 
   // Keep the standalone lake for future panels/details, not for the main island map.
