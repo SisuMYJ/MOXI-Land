@@ -75,7 +75,7 @@ export class IslandScene extends Phaser.Scene {
     // Place map objects by their front/door side, not by visual center.
     // Their origin is bottom-center, so each point below is the spot where the building's front path touches the island path.
     const animalGarden = at(0.285, 0.415); // entrance stones meet the upper-left ring road
-    const task = at(0.515, 0.415); // front steps land on the upper lake path, with the back tucked into trees
+    const task = at(0.475, 0.41); // task cottage stays clearly left of the farm, landing on the upper lake path
     const message = at(0.19, 0.57); // restored to cover the irregular left path patch
     const farmPlot = at(0.755, 0.455); // farm fence/front edge follows the right-side path pad
     const shop = at(0.655, 0.685); // shop door faces the lower-right path plaza
