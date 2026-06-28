@@ -34,6 +34,8 @@ type IslandLayout = {
   farmPlotY: number;
   shopX: number;
   shopY: number;
+  animalGardenX: number;
+  animalGardenY: number;
 };
 
 export class IslandScene extends Phaser.Scene {
@@ -73,6 +75,7 @@ export class IslandScene extends Phaser.Scene {
     const message = at(0.24, 0.55);
     const farmPlot = at(0.72, 0.45);
     const shop = at(0.66, 0.66);
+    const animalGarden = at(0.29, 0.41);
 
     return {
       centerX: w / 2,
@@ -97,6 +100,8 @@ export class IslandScene extends Phaser.Scene {
       farmPlotY: farmPlot.y,
       shopX: shop.x,
       shopY: shop.y,
+      animalGardenX: animalGarden.x,
+      animalGardenY: animalGarden.y,
     };
   }
 
@@ -242,6 +247,7 @@ export class IslandScene extends Phaser.Scene {
     this.addLakeHotspot(layout);
 
     // Cleaned PNGs now replace the rough vector building placeholders.
+    new BuildingSprite(this, layout.animalGardenX, layout.animalGardenY, 'Animal Garden', 0xcfe7a0, () => emitIslandEvent('moxi-open-panel', 'animalGarden'), 'animal-garden');
     new BuildingSprite(this, layout.taskX, layout.taskY, '任务小屋', 0xf7d794, () => emitIslandEvent('moxi-open-panel', 'tasks'), 'task-cottage');
     new BuildingSprite(this, layout.messageX, layout.messageY, '留言板', 0xc9a06a, () => emitIslandEvent('moxi-open-panel', 'messages'), 'message-board');
     new FarmPlotSprite(this, layout.farmPlotX, layout.farmPlotY, 'farm-plot', () => emitIslandEvent('moxi-open-panel', 'farm'));
