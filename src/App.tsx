@@ -49,6 +49,7 @@ export default function App() {
     farm: '农场区',
     messages: '留言板',
     resident: '居民互动',
+    animalGarden: 'Animal Garden',
     forest: '森林探险',
     lake: '星光湖',
     island: '扩岛计划',
@@ -65,7 +66,7 @@ export default function App() {
           {activePanel === 'shop' && <ShopPanel />}
           {activePanel === 'farm' && <FarmPanel />}
           {activePanel === 'messages' && <MessageBoardPanel />}
-          {activePanel === 'resident' && <ResidentPanel />}
+          {(activePanel === 'resident' || activePanel === 'animalGarden') && <ResidentPanel />}
           {activePanel === 'forest' && <ExplorationPanel zone="forest" />}
           {activePanel === 'lake' && <ExplorationPanel zone="lake" />}
           {activePanel === 'island' && <IslandExpansionPanel />}
