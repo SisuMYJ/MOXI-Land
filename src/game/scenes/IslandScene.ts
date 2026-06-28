@@ -72,7 +72,7 @@ export class IslandScene extends Phaser.Scene {
     const forest = at(0.52, 0.32);
     const lake = at(0.5, 0.52);
     // Animal Garden sits where its entrance path naturally connects to the painted island path.
-    const animalGarden = at(0.305, 0.405);
+    const animalGarden = at(0.29, 0.41);
     // Other buildings leave more breathing room around Animal Garden and the center lake.
     const task = at(0.49, 0.395);
     const message = at(0.19, 0.57);
