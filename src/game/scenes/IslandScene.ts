@@ -71,11 +71,13 @@ export class IslandScene extends Phaser.Scene {
 
     const forest = at(0.52, 0.32);
     const lake = at(0.5, 0.52);
-    const task = at(0.48, 0.39);
-    const message = at(0.22, 0.56);
-    const farmPlot = at(0.75, 0.43);
-    const shop = at(0.64, 0.66);
-    const animalGarden = at(0.30, 0.40);
+    // Animal Garden sits where its entrance path naturally connects to the painted island path.
+    const animalGarden = at(0.305, 0.405);
+    // Other buildings leave more breathing room around Animal Garden and the center lake.
+    const task = at(0.49, 0.395);
+    const message = at(0.19, 0.57);
+    const farmPlot = at(0.765, 0.435);
+    const shop = at(0.645, 0.665);
 
     return {
       centerX: w / 2,
@@ -105,22 +107,39 @@ export class IslandScene extends Phaser.Scene {
     };
   }
 
-  private getResidentPosition(residentId: string, layout: IslandLayout): { x: number; y: number } | undefined {
+  private getResidentOutdoorSpots(layout: IslandLayout) {
     const bgTop = layout.bgY - layout.bgH / 2;
     const at = (u: number, v: number) => ({
       x: layout.bgX - layout.bgW / 2 + u * layout.bgW,
       y: bgTop + v * layout.bgH,
     });
 
-    const residentPositions: Record<string, { x: number; y: number }> = {
-      'foko-fox': at(0.35, 0.28),
-      'deer-lamp': at(0.68, 0.32),
-      'mist-cat': at(0.18, 0.51),
-      'slow-bear': at(0.22, 0.69),
-      'dango-rabbit': at(0.51, 0.71),
-    };
+    // Safe island-only spots. Residents are daily visitors, not fixed landmarks.
+    return [
+      at(0.36, 0.29), // upper-left tree path
+      at(0.67, 0.32), // farm-side path
+      at(0.20, 0.54), // message-board path
+      at(0.73, 0.57), // right-side path bend
+      at(0.24, 0.67), // lower-left steps on land
+      at(0.50, 0.71), // lower central path
+      at(0.60, 0.66), // lantern-shop front path
+    ];
+  }
 
-    return residentPositions[residentId];
+  private getRandomResidentPositions(layout: IslandLayout, outdoorResidents: Resident[]) {
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const seed = todayKey.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+    const spots = [...this.getResidentOutdoorSpots(layout)];
+
+    // Deterministic daily shuffle: changes day by day but stays stable during one preview session.
+    spots.sort((a, b) => Math.sin(a.x * 0.13 + a.y * 0.07 + seed) - Math.sin(b.x * 0.13 + b.y * 0.07 + seed));
+
+    const result: Record<string, { x: number; y: number }> = {};
+    outdoorResidents.forEach((resident, index) => {
+      result[resident.id] = spots[index % spots.length];
+    });
+
+    return result;
   }
 
   private createWeatherEffects(w: number, h: number) {
@@ -253,14 +272,15 @@ export class IslandScene extends Phaser.Scene {
     new FarmPlotSprite(this, layout.farmPlotX, layout.farmPlotY, 'farm-plot', () => emitIslandEvent('moxi-open-panel', 'farm'));
     new BuildingSprite(this, layout.shopX, layout.shopY, '千灯铺', 0xffc9de, () => emitIslandEvent('moxi-open-panel', 'shop'), 'lantern-shop');
 
-    residents
-      .filter((resident) => resident.isOutsideToday)
-      .forEach((resident) => {
-        const positionedResident: Resident = {
-          ...resident,
-          position: this.getResidentPosition(resident.id, layout) ?? resident.position,
-        };
-        new ResidentSprite(this, positionedResident, () => emitIslandEvent('moxi-open-resident', resident.id));
-      });
+    const outdoorResidents = residents.filter((resident) => resident.isOutsideToday);
+    const residentPositions = this.getRandomResidentPositions(layout, outdoorResidents);
+
+    outdoorResidents.forEach((resident) => {
+      const positionedResident: Resident = {
+        ...resident,
+        position: residentPositions[resident.id] ?? resident.position,
+      };
+      new ResidentSprite(this, positionedResident, () => emitIslandEvent('moxi-open-resident', resident.id));
+    });
   }
 }
