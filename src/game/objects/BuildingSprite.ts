@@ -26,12 +26,13 @@ export class BuildingSprite extends Phaser.GameObjects.Container {
 			const text = scene.add
 				.text(labelX, labelY, label, {
 					fontFamily: 'sans-serif',
-					fontSize: '12px',
+					fontSize: '10px',
 					color: '#315342',
-					backgroundColor: 'rgba(255,248,224,0.64)',
-					padding: { x: 5, y: 2 },
+					backgroundColor: 'rgba(255,248,224,0.42)',
+					padding: { x: 4, y: 1 },
 				})
-				.setOrigin(0.5);
+				.setOrigin(0.5)
+				.setAlpha(0.78);
 			this.add(text);
 
 			this.setSize(asset.footprint.w + 28, asset.footprint.h + 34);
@@ -57,8 +58,9 @@ export class BuildingSprite extends Phaser.GameObjects.Container {
 			this.add([body, roof, window, door]);
 
 			const text = scene.add
-				.text(0, 58, label, { fontFamily: 'sans-serif', fontSize: '15px', color: '#315342' })
-				.setOrigin(0.5);
+				.text(0, 58, label, { fontFamily: 'sans-serif', fontSize: '13px', color: '#315342' })
+				.setOrigin(0.5)
+				.setAlpha(0.82);
 			this.add(text);
 
 			this.setSize(140, 130);
