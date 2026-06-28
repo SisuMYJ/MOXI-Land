@@ -9,6 +9,7 @@ import { ShopPanel } from './components/ShopPanel';
 import { FarmPanel } from './components/FarmPanel';
 import { MessageBoardPanel } from './components/MessageBoardPanel';
 import { ResidentPanel } from './components/ResidentPanel';
+import { AnimalGardenPanel } from './components/AnimalGardenPanel';
 import { ExplorationPanel } from './components/ExplorationPanel';
 import { IslandExpansionPanel } from './components/IslandExpansionPanel';
 import { Toast } from './components/Toast';
@@ -17,12 +18,13 @@ import './styles/ui.css';
 
 export default function App() {
   const game = useRef<Phaser.Game>();
-  const { activePanel, openPanel, closePanel, notify, weather } = useGameStore();
+  const { activePanel, openPanel, closePanel, notify, weather, daily } = useGameStore();
 
   useEffect(() => {
-    // Set weather globally for Phaser scene to access
+    // Set weather and daily resident state globally for Phaser scene to access.
     (window as any).__MOXI_WEATHER__ = weather;
-    
+    (window as any).__MOXI_OUTSIDE_RESIDENT_IDS__ = daily.outsideResidentIds;
+
     game.current = createGame('game-root');
     const open = (e: Event) => openPanel((e as CustomEvent).detail);
     const res = (e: Event) => openPanel('resident', (e as CustomEvent).detail);
@@ -38,10 +40,11 @@ export default function App() {
     };
   }, []);
 
-  // Update weather in Phaser when it changes
+  // Update globals for React-side daily refreshes. Phaser reads the first value when the scene is created.
   useEffect(() => {
     (window as any).__MOXI_WEATHER__ = weather;
-  }, [weather]);
+    (window as any).__MOXI_OUTSIDE_RESIDENT_IDS__ = daily.outsideResidentIds;
+  }, [weather, daily.outsideResidentIds]);
 
   const title = {
     tasks: '任务小屋',
@@ -66,7 +69,8 @@ export default function App() {
           {activePanel === 'shop' && <ShopPanel />}
           {activePanel === 'farm' && <FarmPanel />}
           {activePanel === 'messages' && <MessageBoardPanel />}
-          {(activePanel === 'resident' || activePanel === 'animalGarden') && <ResidentPanel />}
+          {activePanel === 'resident' && <ResidentPanel />}
+          {activePanel === 'animalGarden' && <AnimalGardenPanel />}
           {activePanel === 'forest' && <ExplorationPanel zone="forest" />}
           {activePanel === 'lake' && <ExplorationPanel zone="lake" />}
           {activePanel === 'island' && <IslandExpansionPanel />}
