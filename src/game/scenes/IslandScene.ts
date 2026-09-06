@@ -1,33 +1,30 @@
 import Phaser from 'phaser';
-import { islandTiles } from '../../content/islandTiles';
 import { weatherConfigs } from '../../content/weather';
-import { residents } from '../../content/residents';
 import { assetList, visualAssets } from '../../content/visualAssets';
+import type { WeatherConfig } from '../../content/weather';
+import type { IslandSceneState } from '../islandSceneState';
 import { BuildingSprite } from '../objects/BuildingSprite';
 import { FarmPlotSprite } from '../objects/FarmPlotSprite';
 import { ResidentSprite } from '../objects/ResidentSprite';
 import { emitIslandEvent } from '../systems/interactionSystem';
 
 export class IslandScene extends Phaser.Scene {
-  private currentWeather: string = '晴天';
+  private islandState: IslandSceneState;
 
-  constructor() {
+  constructor(initialState: IslandSceneState) {
     super('IslandScene');
+    this.islandState = initialState;
   }
 
-  // Get current weather from global state (injected from React)
-  private initWeather() {
-    const weatherElement = (window as any).__MOXI_WEATHER__;
-    if (weatherElement) {
-      this.currentWeather = weatherElement;
-    }
+  init(nextState?: IslandSceneState) {
+    if (nextState) this.islandState = nextState;
   }
 
   private createWeatherEffects(w: number, h: number) {
-    const config = weatherConfigs[this.currentWeather];
+    const config = weatherConfigs[this.islandState.weather];
     if (!config) return;
 
-    switch (this.currentWeather) {
+    switch (this.islandState.weather) {
       case '晴天':
         this.createSunnyWeather(w, h, config);
         break;
@@ -55,7 +52,7 @@ export class IslandScene extends Phaser.Scene {
     });
   }
 
-  private createSunnyWeather(w: number, h: number, config: any) {
+  private createSunnyWeather(w: number, h: number, config: WeatherConfig) {
     // Warm sky gradient effect with stylized sun
     this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setDepth(-10);
     const sun = this.add.circle(60, 60, 26, 0xffd36b).setDepth(-9).setStrokeStyle(4, 0xfff1c7, 0.9);
@@ -68,7 +65,7 @@ export class IslandScene extends Phaser.Scene {
     });
   }
 
-  private createWindyWeather(w: number, h: number, config: any) {
+  private createWindyWeather(w: number, h: number, config: WeatherConfig) {
     // Light sky with many drifting clouds
     this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setDepth(-10);
     for (let i = 0; i < 5; i++) {
@@ -85,7 +82,7 @@ export class IslandScene extends Phaser.Scene {
     }
   }
 
-  private createRainyWeather(w: number, h: number, config: any) {
+  private createRainyWeather(w: number, h: number, config: WeatherConfig) {
     // Gray sky with rain effect
     this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setDepth(-10);
     // Rain drops animation (simple lines)
@@ -103,7 +100,7 @@ export class IslandScene extends Phaser.Scene {
     }
   }
 
-  private createMistyWeather(w: number, h: number, config: any) {
+  private createMistyWeather(w: number, h: number, config: WeatherConfig) {
     // Light sky with mist layer
     this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setDepth(-10);
     
@@ -129,7 +126,7 @@ export class IslandScene extends Phaser.Scene {
     });
   }
 
-  private createStarryNightWeather(w: number, h: number, config: any) {
+  private createStarryNightWeather(w: number, h: number, config: WeatherConfig) {
     // Dark sky with stars
     this.add.rectangle(w / 2, 80, w, 180, config.skyColor).setDepth(-10);
     // Scatter simple star points
@@ -151,9 +148,6 @@ export class IslandScene extends Phaser.Scene {
     const w = this.scale.width;
     const h = this.scale.height;
 
-    // Initialize weather
-    this.initWeather();
-
     // Apply weather effects
     this.createWeatherEffects(w, h);
 
@@ -170,7 +164,7 @@ export class IslandScene extends Phaser.Scene {
     g.setDepth(-12);
 
     // Clouds (fewer in rainy/misty weather) - image or simple ellipse
-    const cloudCount = ['雨天', '林间薄雾'].includes(this.currentWeather) ? 1 : 3;
+    const cloudCount = ['雨天', '林间薄雾'].includes(this.islandState.weather) ? 1 : 3;
     for (let i = 0; i < cloudCount; i++) {
       const key = i % 2 === 0 ? 'cloud-01' : 'cloud-02';
       const cx = 80 + i * 210;
@@ -239,7 +233,7 @@ export class IslandScene extends Phaser.Scene {
     lakeContainer.setSize(240, 140).setInteractive({ useHandCursor: true }).on('pointerdown', () => emitIslandEvent('moxi-open-panel', 'lake'));
     this.tweens.add({ targets: lakeBody, scaleX: 1.08, alpha: 0.72, duration: 1500, yoyo: true, repeat: -1 });
 
-    islandTiles.forEach((tile) => {
+    this.islandState.islandTiles.forEach((tile) => {
       const isUnlocked = tile.status === 'unlocked';
       const hex = this.add.polygon(tile.position.x, tile.position.y, [35, 0, 17, 30, -17, 30, -35, 0, -17, -30, 17, -30], isUnlocked ? 0xfef3b7 : 0xffffff, isUnlocked ? 0.35 : 0.22)
         .setStrokeStyle(2, isUnlocked ? 0xf7c96b : 0xffffff, 0.7);
@@ -261,6 +255,8 @@ export class IslandScene extends Phaser.Scene {
       });
     });
 
-    residents.filter((resident) => resident.isOutsideToday).forEach((resident) => new ResidentSprite(this, resident, () => emitIslandEvent('moxi-open-resident', resident.id)));
+    this.islandState.residents.forEach(
+      (resident) => new ResidentSprite(this, resident, () => emitIslandEvent('moxi-open-resident', resident.id)),
+    );
   }
 }

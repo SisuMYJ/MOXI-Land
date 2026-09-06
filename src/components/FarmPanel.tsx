@@ -1,5 +1,6 @@
 import type { FarmItem, FarmStage } from '../types/game';
 import { useGameStore } from '../store/useGameStore';
+import { farmCapacityForTiles } from '../game/systems/farmSystem';
 
 function iconForFarmItem(item: FarmItem): string {
   if (item.category === 'plant') {
@@ -33,10 +34,12 @@ function labelForStage(stage: FarmStage): string {
 }
 
 export function FarmPanel() {
-  const { farm, careFarm, sellProduce } = useGameStore();
+  const { farm, islandTiles, careFarm, sellProduce } = useGameStore();
+  const capacity = farmCapacityForTiles(islandTiles);
   
   return (
     <div>
+      <p className="muted">农场容量：{farm.length} / {capacity}</p>
       <button className="primary" onClick={careFarm}>一键浇水喂食（消耗 ⭐1）</button>
       <div className="farmgrid">
         {farm.map(f => {

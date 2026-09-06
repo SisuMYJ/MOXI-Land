@@ -8,11 +8,14 @@
 - 云朵、树木、湖水、居民具备轻量动态。
 - 任务完成获得星星币；商店购买消耗星星币或月亮币。
 - **结构化背包系统**：种子/鱼/动物进入农场，礼物/碎片进入背包（数量堆叠）；同 itemId 的物品自动合并。
+- **独立背包入口**：HUD 可随时打开旅行背包，分类查看礼物、碎片、资源与探索奖励。
 - **商店购买分流**：根据商品类别自动分配到农场或背包；购买成功提示说明去向。
 - **送礼机制**：背包有礼物时显示选择器，玩家可选择具体礼物送出；礼物 tags 匹配居民 favoriteGiftTags 则好感度 +4，否则 +2；每位居民每天限送一次。
 - 农场一键浇水喂食消耗星星币，成熟资源出售获得月亮币。资源来自 mature farm item 的 produceResourceId 与 resourceName，出售后自动重置成长状态。
+- 农场具有容量限制；解锁“新农场”地块后会增加可用容量。
 - 留言板每日查看消耗月亮币并绑定日期，每天从内容池固定抽取多条。
 - 森林/湖泊探索故事雏形，消耗月亮币逐日推进，完成奖励按 InventoryItem 结构化格式堆叠进背包。
+- 中断的探索可以重新整备并再次开始，不会形成永久无法继续的存档。
 - 5 位原创动物居民，支持按居民、天气、好感度抽取聊天台词，聊天与送礼好感度保存。
 - 每日天气、外出居民、商店商品、Lumo 台词按日期固定刷新。
 - 关键进度使用 localStorage 持久化；支持自动迁移旧版 string[] 格式 inventory 为结构化 InventoryItem[]。
@@ -29,6 +32,14 @@ npm run dev
 ```bash
 npm run build
 ```
+
+## GitHub Pages 部署
+
+仓库已包含 `.github/workflows/deploy-pages.yml`。推送到 `main` 分支后会自动执行类型检查、测试和生产构建，并将 `dist/` 发布到 GitHub Pages。
+
+首次部署前，在 GitHub 仓库的 **Settings → Pages → Build and deployment → Source** 中选择 **GitHub Actions**。之后可以通过推送 `main` 自动部署，也可以在 **Actions → Deploy GitHub Pages → Run workflow** 手动触发。
+
+Vite 使用相对资源路径，因此既能部署在用户站点根目录，也能部署在 `/仓库名/` 子路径。
 
 ## 内容与功能扩展
 
