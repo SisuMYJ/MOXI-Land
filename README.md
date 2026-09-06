@@ -33,6 +33,14 @@ npm run dev
 npm run build
 ```
 
+## GitHub Pages 部署
+
+仓库已包含 `.github/workflows/deploy-pages.yml`。推送到 `main` 分支后会自动执行类型检查、测试和生产构建，并将 `dist/` 发布到 GitHub Pages。
+
+首次部署前，在 GitHub 仓库的 **Settings → Pages → Build and deployment → Source** 中选择 **GitHub Actions**。之后可以通过推送 `main` 自动部署，也可以在 **Actions → Deploy GitHub Pages → Run workflow** 手动触发。
+
+Vite 使用相对资源路径，因此既能部署在用户站点根目录，也能部署在 `/仓库名/` 子路径。
+
 ## 内容与功能扩展
 
 ### 背包系统
