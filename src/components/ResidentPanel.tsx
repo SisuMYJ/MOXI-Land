@@ -2,6 +2,7 @@ import { friendshipBandFor, residentDialogues } from '../content/residentDialogu
 import { pickDailyItem } from '../game/systems/dailyPicker';
 import { useGameStore } from '../store/useGameStore';
 import { useState } from 'react';
+import { todayKey } from '../utils/date';
 
 const iconForSpecies = (species: string) =>
   species === '猫' ? '🐱' : species === '狐狸' ? '🦊' : species === '鹿' ? '🦌' : species === '熊' ? '🐻' : '🐰';
@@ -26,7 +27,7 @@ export function ResidentPanel() {
   });
 
   const gifts = inventory.filter((it) => it.category === 'gift');
-  const alreadyGifted = resident.giftedDate === new Date().toISOString().split('T')[0];
+  const alreadyGifted = resident.giftedDate === todayKey();
   const hasGift = gifts.length > 0;
 
   return (
@@ -40,7 +41,9 @@ export function ResidentPanel() {
       <button onClick={() => chatResident(resident.id)}>聊天</button>
       {hasGift ? (
         <div>
+          <label htmlFor="resident-gift">选择要送出的礼物</label>
           <select
+            id="resident-gift"
             value={selectedGiftId ?? ''}
             onChange={(e: { target: { value: string } }) => setSelectedGiftId(e.target.value || undefined)}
           >
