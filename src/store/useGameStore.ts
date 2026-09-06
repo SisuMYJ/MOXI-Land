@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { boardMessages } from '../content/boardMessages';
 import { initialFarmItems } from '../content/farmItems';
 import { explorationStories } from '../content/explorationStories';
+import { gifts } from '../content/gifts';
 import { islandTiles as initialIslandTiles } from '../content/islandTiles';
 import { lumoLines } from '../content/lumoLines';
 import { residents as residentConfig } from '../content/residents';
@@ -9,12 +10,13 @@ import { shopItems } from '../content/shopItems';
 import { tasks as taskConfig } from '../content/tasks';
 import { weatherOptions } from '../content/weather';
 import { pickDailyItem, pickDailyItems } from '../game/systems/dailyPicker';
+import { farmCapacityForTiles, isFarmShopItem } from '../game/systems/farmSystem';
 import type { Currency, DailyState, ExplorationStory, FarmItem, IslandTile, Panel, Resident, ShopItem, Task, InventoryItem } from '../types/game';
 import { todayKey } from '../utils/date';
 import { loadState, saveState } from '../utils/localStorage';
 
 type BoardState = { date: string; message?: string; messages: string[]; viewed: boolean };
-type StateActions = Pick<State, 'openPanel' | 'closePanel' | 'completeTask' | 'buyItem' | 'careFarm' | 'sellProduce' | 'viewBoard' | 'chatResident' | 'giftResident' | 'advanceStory' | 'unlockIslandTile' | 'notify'>;
+type StateActions = Pick<State, 'openPanel' | 'closePanel' | 'refreshDaily' | 'completeTask' | 'buyItem' | 'careFarm' | 'sellProduce' | 'viewBoard' | 'chatResident' | 'giftResident' | 'advanceStory' | 'restartStory' | 'unlockIslandTile' | 'notify'>;
 
 type State = {
   stars: number;
@@ -33,14 +35,16 @@ type State = {
   toast?: string;
   openPanel: (p: Panel, id?: string) => void;
   closePanel: () => void;
+  refreshDaily: () => void;
   completeTask: (id: string) => void;
-  buyItem: (id: string, price: number, currency: Currency) => void;
+  buyItem: (id: string) => void;
   careFarm: () => void;
   sellProduce: (id: string) => void;
   viewBoard: () => void;
   chatResident: (id: string) => void;
   giftResident: (residentId: string, inventoryItemId?: string) => void;
   advanceStory: (zone: 'forest' | 'lake') => void;
+  restartStory: (zone: 'forest' | 'lake') => void;
   unlockIslandTile: (id: string) => void;
   notify: (m: string) => void;
 };
@@ -63,6 +67,25 @@ const buildDailyState = (date = todayKey()): DailyState => {
   const lumoLineId = pickDailyItem(lumoLines, { namespace: 'lumo-line', date })?.id ?? lumoLines[0]?.id ?? '';
 
   return { date, weather, outsideResidentIds, shopItemIds, lumoLineId };
+};
+
+const hasStringId = (value: unknown): value is { id: string } =>
+  typeof value === 'object' && value !== null && typeof (value as { id?: unknown }).id === 'string';
+
+const isEntityArray = (value: unknown): value is Array<{ id: string }> => Array.isArray(value) && value.every(hasStringId);
+
+const isDailyState = (value: unknown): value is DailyState => {
+  if (typeof value !== 'object' || value === null) return false;
+  const daily = value as Partial<DailyState>;
+  return (
+    typeof daily.date === 'string' &&
+    typeof daily.weather === 'string' &&
+    Array.isArray(daily.outsideResidentIds) &&
+    daily.outsideResidentIds.every((id) => typeof id === 'string') &&
+    Array.isArray(daily.shopItemIds) &&
+    daily.shopItemIds.every((id) => typeof id === 'string') &&
+    typeof daily.lumoLineId === 'string'
+  );
 };
 
 const resetDailyTasks = (tasks: Task[], date: string): Task[] =>
@@ -132,13 +155,24 @@ const initial = refreshDailyState({
 });
 
 // Support migration from legacy string[] inventory in localStorage
-const raw = loadState('moxi-island-v1', initial) as any;
+const raw = loadState('moxi-island-v1', initial) as Partial<typeof initial> & { inventory?: unknown };
 const migrated = (() => {
   if (!raw) return initial;
-  const state = raw;
+  const state = {
+    ...initial,
+    ...raw,
+    stars: typeof raw.stars === 'number' && Number.isFinite(raw.stars) ? Math.max(0, raw.stars) : initial.stars,
+    moons: typeof raw.moons === 'number' && Number.isFinite(raw.moons) ? Math.max(0, raw.moons) : initial.moons,
+    tasks: isEntityArray(raw.tasks) ? (raw.tasks as Task[]) : initial.tasks,
+    farm: isEntityArray(raw.farm) ? (raw.farm as FarmItem[]) : initial.farm,
+    residents: isEntityArray(raw.residents) ? (raw.residents as Resident[]) : initial.residents,
+    stories: isEntityArray(raw.stories) ? (raw.stories as ExplorationStory[]) : initial.stories,
+    islandTiles: isEntityArray(raw.islandTiles) ? (raw.islandTiles as IslandTile[]) : initial.islandTiles,
+    daily: isDailyState(raw.daily) ? raw.daily : initial.daily,
+  };
   const inv = state.inventory ?? initial.inventory;
   // if inventory is array of strings, migrate
-  if (Array.isArray(inv) && inv.every((i: any) => typeof i === 'string')) {
+  if (Array.isArray(inv) && inv.every((item) => typeof item === 'string')) {
     const mapped: InventoryItem[] = inv.map((label: string, idx: number) => {
       if (label.startsWith('gift:')) {
         const itemId = label.split(':')[1];
@@ -157,7 +191,7 @@ const migrated = (() => {
     });
     return refreshDailyState({ ...state, inventory: mapped });
   }
-  return refreshDailyState(state);
+  return refreshDailyState({ ...state, inventory: isEntityArray(inv) ? (inv as InventoryItem[]) : initial.inventory });
 })();
 
 const persisted = migrated as State;
@@ -202,6 +236,12 @@ export const useGameStore = create<State>((set, get) => ({
   ...persisted,
   openPanel: (activePanel, selectedResidentId) => set({ activePanel, selectedResidentId }),
   closePanel: () => set({ activePanel: null, selectedResidentId: undefined }),
+  refreshDaily: () =>
+    set((state) => {
+      const refreshed = refreshDailyState(state, todayKey()) as State;
+      if (refreshed.daily.date !== state.daily.date) persist(refreshed);
+      return refreshed;
+    }),
   unlockIslandTile: (id) =>
     set((s) => {
       const tile = s.islandTiles.find((item) => item.id === id);
@@ -244,47 +284,75 @@ export const useGameStore = create<State>((set, get) => ({
       get().notify(`获得 ${task.rewardStars} 星星币`);
       return ns;
     }),
-  buyItem: (id, price, currency) =>
+  buyItem: (id) =>
     set((s) => {
-      if (!hasCurrency(s, currency, price)) {
-        get().notify('货币不够哦');
-        return s;
-      }
+      const refreshed = refreshDailyState(s, todayKey()) as State;
       const item = shopItems.find((shopItem) => shopItem.id === id);
-      const farmItem = item ? createFarmItemFromShop(item, s.farm.length) : undefined;
-          const nsBase = {
-            ...s,
-            ...spendCurrency(s, currency, price),
-            farm: farmItem ? [...s.farm, farmItem] : s.farm,
-          } as State;
-          let ns: State;
-          if (farmItem) {
-            ns = nsBase;
-          } else if (item?.category === 'gift' || item?.category === 'fragment') {
-            // add to structured inventory, stack by itemId
-            const existing = s.inventory.find((it) => it.itemId === item.id);
-            let newInv: InventoryItem[];
-            if (existing) {
-              newInv = s.inventory.map((it) => (it.itemId === item.id ? { ...it, quantity: it.quantity + 1 } : it));
-            } else {
-              const invItem: InventoryItem = { id: `inv-${item.id}-${Date.now()}`, itemId: item.id, name: item.name, category: item.category === 'gift' ? 'gift' : 'fragment', quantity: 1, tags: [] };
-              newInv = [...s.inventory, invItem];
-            }
-            ns = { ...nsBase, inventory: newInv } as State;
-          } else {
-            // legacy/resource/reward -> keep as resource entry
-            const existing = s.inventory.find((it) => it.itemId === (item?.id ?? id));
-            let newInv: InventoryItem[];
-            if (existing) {
-              newInv = s.inventory.map((it) => (it.itemId === (item?.id ?? id) ? { ...it, quantity: it.quantity + 1 } : it));
-            } else {
-              const invItem: InventoryItem = { id: `inv-${item?.id ?? id}-${Date.now()}`, itemId: item?.id ?? id, name: item?.name ?? id, category: 'resource', quantity: 1, tags: [] };
-              newInv = [...s.inventory, invItem];
-            }
-            ns = { ...nsBase, inventory: newInv } as State;
-          }
+      if (!item || !item.availableToday || !refreshed.daily.shopItemIds.includes(id)) {
+        get().notify('这件商品今天没有上架');
+        return refreshed;
+      }
+      if (!hasCurrency(refreshed, item.currency, item.price)) {
+        get().notify('货币不够哦');
+        return refreshed;
+      }
+      if (isFarmShopItem(item) && refreshed.farm.length >= farmCapacityForTiles(refreshed.islandTiles)) {
+        get().notify('农场已经满了，解锁新农场可以增加容量');
+        return refreshed;
+      }
+      const farmItem = createFarmItemFromShop(item, refreshed.farm.length);
+      const nsBase = {
+        ...refreshed,
+        ...spendCurrency(refreshed, item.currency, item.price),
+        farm: farmItem ? [...refreshed.farm, farmItem] : refreshed.farm,
+      } as State;
+      let ns: State;
+      if (farmItem) {
+        ns = nsBase;
+      } else if (item.category === 'gift' || item.category === 'fragment') {
+        const existing = refreshed.inventory.find((inventoryItem) => inventoryItem.itemId === item.id);
+        let inventory: InventoryItem[];
+        if (existing) {
+          inventory = refreshed.inventory.map((inventoryItem) =>
+            inventoryItem.itemId === item.id ? { ...inventoryItem, quantity: inventoryItem.quantity + 1 } : inventoryItem,
+          );
+        } else {
+          const gift = item.category === 'gift' ? gifts.find((candidate) => candidate.id === item.id) : undefined;
+          inventory = [
+            ...refreshed.inventory,
+            {
+              id: `inv-${item.id}-${Date.now()}`,
+              itemId: item.id,
+              name: item.name,
+              category: item.category,
+              quantity: 1,
+              tags: gift?.tags ?? [],
+            },
+          ];
+        }
+        ns = { ...nsBase, inventory } as State;
+      } else {
+        const existing = refreshed.inventory.find((inventoryItem) => inventoryItem.itemId === item.id);
+        const inventory = existing
+          ? refreshed.inventory.map((inventoryItem) =>
+              inventoryItem.itemId === item.id ? { ...inventoryItem, quantity: inventoryItem.quantity + 1 } : inventoryItem,
+            )
+          : [
+              ...refreshed.inventory,
+              { id: `inv-${item.id}-${Date.now()}`, itemId: item.id, name: item.name, category: 'resource' as const, quantity: 1, tags: [] },
+            ];
+        ns = { ...nsBase, inventory } as State;
+      }
       persist(ns);
-          get().notify(farmItem ? '购买成功，已加入农场' : item?.category === 'gift' ? '购买成功，礼物已放入背包' : item?.category === 'fragment' ? '购买成功，碎片已放入背包' : '购买成功，已放入背包');
+      get().notify(
+        farmItem
+          ? '购买成功，已加入农场'
+          : item.category === 'gift'
+            ? '购买成功，礼物已放入背包'
+            : item.category === 'fragment'
+              ? '购买成功，碎片已放入背包'
+              : '购买成功，已放入背包',
+      );
       return ns;
     }),
   careFarm: () =>
@@ -319,7 +387,7 @@ export const useGameStore = create<State>((set, get) => ({
       );
       const ns = { ...s, farm, moons: s.moons + item.sellMoonValue } as State;
       persist(ns);
-      get().notify(`卖出${item.produceResourceId}，获得 ${item.sellMoonValue} 月亮币`);
+      get().notify(`卖出${item.resourceName}，获得 ${item.sellMoonValue} 月亮币`);
       return ns;
     }),
   viewBoard: () =>
@@ -355,13 +423,19 @@ export const useGameStore = create<State>((set, get) => ({
     set((s) => {
       const today = todayKey();
       const resident = s.residents.find((item) => item.id === residentId);
+      if (!resident) {
+        get().notify('没有找到这位居民');
+        return s;
+      }
       const alreadyGifted = resident?.giftedDate === today;
       if (alreadyGifted) {
         get().notify('今天已经送过礼啦');
         return s;
       }
       // choose specified inventory item or first gift
-      const gift = inventoryItemId ? s.inventory.find((it) => it.id === inventoryItemId) : s.inventory.find((it) => it.category === 'gift');
+      const gift = inventoryItemId
+        ? s.inventory.find((item) => item.id === inventoryItemId && item.category === 'gift' && item.quantity > 0)
+        : s.inventory.find((item) => item.category === 'gift' && item.quantity > 0);
       if (!gift) {
         get().notify('背包里还没有礼物');
         return s;
@@ -371,7 +445,7 @@ export const useGameStore = create<State>((set, get) => ({
         .map((it) => (it.id === gift.id ? { ...it, quantity: it.quantity - 1 } : it))
         .filter((it) => it.quantity > 0);
       // friendship change: +4 if tags match favoriteGiftTags, else +2
-      const matches = gift.tags && resident ? gift.tags.some((t) => resident.favoriteGiftTags?.includes(t)) : false;
+      const matches = gift.tags?.some((tag) => resident.favoriteGiftTags.includes(tag)) ?? false;
       const delta = matches ? 4 : 2;
       const residents = s.residents.map((item) => (item.id === residentId ? { ...item, giftedDate: today, friendship: item.friendship + delta } : item));
       const ns = { ...s, residents, inventory } as State;
@@ -379,7 +453,21 @@ export const useGameStore = create<State>((set, get) => ({
       get().notify(matches ? '送出礼物，好感度大幅提升' : '送出礼物，好感度提升');
       return ns;
     }),
-   advanceStory: (zone) =>
+  restartStory: (zone) =>
+    set((state) => {
+      const story = state.stories.find((item) => item.zone === zone);
+      if (!story || story.status !== 'failed') return state;
+      const stories = state.stories.map((item) =>
+        item.zone === zone
+          ? { ...item, status: 'not_started' as const, currentDay: 0, lastAdvancedDate: undefined }
+          : item,
+      );
+      const nextState = { ...state, stories } as State;
+      persist(nextState);
+      get().notify('已经重新整备，可以再次出发了');
+      return nextState;
+    }),
+  advanceStory: (zone) =>
     set((s) => {
       const today = todayKey();
       const refreshed = refreshDailyState(s, today) as State;

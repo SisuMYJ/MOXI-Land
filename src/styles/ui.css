@@ -20,6 +20,10 @@
   backdrop-filter: blur(6px);
   color: #2f5a46;
 }
+.hud-action {
+  pointer-events: auto;
+  box-shadow: 0 3px 0 #d79d3c;
+}
 .scrim {
   position: absolute;
   inset: 0;
